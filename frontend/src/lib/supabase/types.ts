@@ -1,0 +1,121 @@
+export interface UserProfile {
+  id: string;
+  auth_id: string;
+  email: string;
+  tenant_id: string | null;
+  created_at: string;
+  updated_at: string;
+  username?: string | null;
+}
+
+export interface Team {
+  id: number;
+  name: string;
+  slug?: string;
+  short_code?: string | null;
+  country?: string | null;
+  league?: string | null;
+  season?: string | null;
+  logo?: string | null;
+  founded?: number | null;
+  stadium?: string | null;
+}
+
+export interface Player {
+  id: number;
+  name: string;
+  slug?: string;
+  nationality?: string | null;
+  position?: string | null;
+  age?: number | null;
+  height?: number | null;
+  weight?: number | null;
+  club?: string | null;
+  club_image_path?: string | null;
+  season?: string | null;
+  league?: string | null;
+  number?: number | null;
+  avatar?: string | null;
+}
+
+export interface Fixture {
+
+    id:number;
+
+    starting_at:string;
+
+    state_id:number;
+
+    league:{
+        id:number;
+        name:string;
+        image_path:string;
+    };
+
+    home:{
+        id:number;
+        name:string;
+        image_path:string;
+        winner:boolean;
+        goals:number;
+    };
+
+    away:{
+        id:number;
+        name:string;
+        image_path:string;
+        winner:boolean;
+        goals:number;
+    };
+
+}
+
+export interface FixtureLeagueDirectory {
+  id: number;
+  name: string;
+  slug: string;
+  country: string | null;
+  logo: string | null;
+}
+
+export interface FixtureClubOption {
+  id: number;
+  name: string;
+  image_path: string | null;
+}
+
+export interface FixtureSeasonOption {
+  id: number;
+  name: string;
+}
+
+export interface StandingRow {
+  position: number;
+  team: string;
+  played: number;
+  win: number;
+  draw: number;
+  loss: number;
+  goalsFor?: number;
+  goalsAgainst?: number;
+  points: number;
+  result: string;
+  image_path: string;
+  form?: string;
+  league?: string;
+}
+
+export interface DashboardStats {
+  standings: StandingRow[];
+  topScorers: Array<{ player: string; team: string; goals: number; image_path: string, team_image_path: string }>;
+  topAssists: Array<{ player: string; team: string; assists: number; image_path: string, team_image_path: string }>;
+  topRedcards: Array<{ player: string; team: string; redcards: number; image_path: string, team_image_path: string }>;
+  recentFixtures: Fixture[];
+  upcomingFixtures: Fixture[];
+  leagueStats: {
+    totalTeams: number;
+    totalMatches: number;
+    avgGoals: number;
+    homeWins: number;
+  };
+}
