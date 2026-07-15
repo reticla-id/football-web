@@ -905,8 +905,6 @@ export async function getFixtureStatistics(
     }
   );
 
-  console.log(data)
-
   return {
     data: data ?? [],
     error,
