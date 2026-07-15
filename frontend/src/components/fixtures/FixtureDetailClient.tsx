@@ -5,6 +5,7 @@ import { Clock3, MapPin, Users } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import FixtureStatistics from "@/features/fixture/statistics/FixtureStatistics";
+import FixtureTimeline from "@/features/fixture/timeline/FixtureTimeline";
 import type { FixtureLeagueDirectory } from "@/lib/supabase/types";
 import type {
   FixtureLineupPlayer,
@@ -27,6 +28,13 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
   const [tab, setTab] = useState<FixtureTab>("match-facts");
   const kickoff = new Date(fixture.starting_at);
   const hasStarted = kickoff.getTime() <= Date.now();
+  const fixtureId = typeof fixture?.id === "number" ? fixture.id : 0;
+  const homeName = fixture?.home?.name ?? "Home Team";
+  const awayName = fixture?.away?.name ?? "Away Team";
+  const homeImage = fixture?.home?.image_path ?? null;
+  const awayImage = fixture?.away?.image_path ?? null;
+  const homeGoals = fixture?.home?.goals ?? 0;
+  const awayGoals = fixture?.away?.goals ?? 0;
 
   const preparedLineups = useMemo(
     () => buildPreparedLineups(fixture, lineups),
@@ -42,7 +50,7 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
               Fixture Detail
             </p>
             <h1 className="font-display text-[3rem] leading-[0.92] text-white sm:text-[4rem]">
-              {fixture.home.name} vs {fixture.away.name}
+              {homeName} vs {awayName}
             </h1>
             <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-400">
               <span className="border border-zinc-800 bg-zinc-950/70 px-3 py-1">
@@ -56,8 +64,8 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
 
           <div className="grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-center">
             <ParticipantBlock
-              name={fixture.home.name}
-              image={fixture.home.image_path}
+              name={homeName}
+              image={homeImage}
             />
 
             <div className="border-x border-zinc-800/80 px-8 py-4 text-center">
@@ -66,7 +74,7 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
               </p>
               <div className="font-display mt-2 text-[2.8rem] leading-none text-white">
                 {hasStarted
-                  ? `${fixture.home.goals ?? 0} - ${fixture.away.goals ?? 0}`
+                  ? `${homeGoals} - ${awayGoals}`
                   : kickoff.toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
@@ -75,8 +83,8 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
             </div>
 
             <ParticipantBlock
-              name={fixture.away.name}
-              image={fixture.away.image_path}
+              name={awayName}
+              image={awayImage}
               align="right"
             />
           </div>
@@ -106,7 +114,9 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
         {tab === "match-facts" ? (
           <FixtureStatistics fixture={fixture} statistics={statistics} />
         ) : null}
-        <PlaceholderPanel tab={tab} title="Timeline" active={tab === "timeline"} />
+        {tab === "timeline" ? (
+          <FixtureTimeline fixtureId={fixtureId} />
+        ) : null}
 
         {tab === "lineups" ? <LineupsPanel fixture={fixture} lineups={preparedLineups} /> : null}
 
@@ -153,6 +163,10 @@ function LineupsPanel({
   lineups: PreparedFixtureLineups;
 }) {
   const hasAnyLineup = lineups.home.players.length > 0 || lineups.away.players.length > 0;
+  const homeName = fixture?.home?.name ?? "Home Team";
+  const awayName = fixture?.away?.name ?? "Away Team";
+  const homeImage = fixture?.home?.image_path ?? null;
+  const awayImage = fixture?.away?.image_path ?? null;
 
   return (
     <div
@@ -171,16 +185,16 @@ function LineupsPanel({
         <>
           <LineupColumn
             side="home"
-            fallbackName={fixture.home.name}
-            fallbackImage={fixture.home.image_path}
+            fallbackName={homeName}
+            fallbackImage={homeImage}
             team={lineups.home.team}
             formation={lineups.home.formation}
             players={lineups.home.players}
           />
           <LineupColumn
             side="away"
-            fallbackName={fixture.away.name}
-            fallbackImage={fixture.away.image_path}
+            fallbackName={awayName}
+            fallbackImage={awayImage}
             team={lineups.away.team}
             formation={lineups.away.formation}
             players={lineups.away.players}
@@ -259,7 +273,7 @@ function LineupPlayerRow({ player }: { player: FixtureLineupPlayer }) {
       <img
         src={player.player.image_path ?? "/placeholder-player.png"}
         alt={playerName}
-        className="h-11 w-11 object-cover"
+        className="h-11 w-11 rounded-full object-cover"
       />
 
       <div className="min-w-0">
@@ -338,12 +352,12 @@ function buildPreparedLineups(
 
   return {
     home: {
-      team: lineups?.teams.home ?? null,
+      team: lineups?.teams?.home ?? null,
       formation: getFormation(lineups, "home"),
       players: homePlayers,
     },
     away: {
-      team: lineups?.teams.away ?? null,
+      team: lineups?.teams?.away ?? null,
       formation: getFormation(lineups, "away"),
       players: awayPlayers,
     },
@@ -351,19 +365,21 @@ function buildPreparedLineups(
 }
 
 function sortLineupPlayers(players: FixtureLineupPlayer[]) {
-  return [...players].sort((left, right) => {
-    const leftPosition = left.formation_position ?? Number.MAX_SAFE_INTEGER;
-    const rightPosition = right.formation_position ?? Number.MAX_SAFE_INTEGER;
+  return [...players]
+    .filter((player): player is FixtureLineupPlayer => Boolean(player))
+    .sort((left, right) => {
+      const leftPosition = left?.formation_position ?? Number.MAX_SAFE_INTEGER;
+      const rightPosition = right?.formation_position ?? Number.MAX_SAFE_INTEGER;
 
-    if (leftPosition !== rightPosition) {
-      return leftPosition - rightPosition;
-    }
+      if (leftPosition !== rightPosition) {
+        return leftPosition - rightPosition;
+      }
 
-    const leftName = left.player.display_name ?? "";
-    const rightName = right.player.display_name ?? "";
+      const leftName = left?.player?.display_name ?? "";
+      const rightName = right?.player?.display_name ?? "";
 
-    return leftName.localeCompare(rightName);
-  });
+      return leftName.localeCompare(rightName);
+    });
 }
 
 function getFormation(
@@ -375,10 +391,10 @@ function getFormation(
   }
 
   if (side === "home") {
-    return lineups.teams.home.formation;
+    return lineups.teams?.home?.formation ?? null;
   }
 
-  return lineups.teams.away.formation;
+  return lineups.teams?.away?.formation ?? null;
 }
 
 function getLineupPositionLabel(player: FixtureLineupPlayer) {

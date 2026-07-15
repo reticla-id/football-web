@@ -164,7 +164,7 @@ export default function PlayersPage() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="League" />
+                <LabeledSelectValue label="League" placeholder="All" />
               </SelectTrigger>
 
               <SelectContent>
@@ -184,7 +184,7 @@ export default function PlayersPage() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Club" />
+                <LabeledSelectValue label="Country" placeholder="All" />
               </SelectTrigger>
 
               <SelectContent>
@@ -204,7 +204,7 @@ export default function PlayersPage() {
               }}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Position" />
+                <LabeledSelectValue label="Position" placeholder="All" />
               </SelectTrigger>
 
               <SelectContent>
@@ -314,6 +314,21 @@ export default function PlayersPage() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function LabeledSelectValue({
+  label,
+  placeholder,
+}: {
+  label: string;
+  placeholder: string;
+}) {
+  return (
+    <div className="flex min-w-0 items-center gap-1.5">
+      <span className="shrink-0 text-zinc-500">{label}:</span>
+      <SelectValue placeholder={placeholder} />
     </div>
   );
 }

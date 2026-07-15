@@ -87,3 +87,49 @@ export interface FixtureStatistic {
   home: string | number | null;
   away: string | number | null;
 }
+
+export interface FixtureTimelineTime {
+  minute: number;
+  extra_minute: number | null;
+  label: string;
+}
+
+export interface FixtureTimelineType {
+  id: number;
+  code: string;
+  name: string;
+  model_type: string | null;
+}
+
+export interface FixtureTimelineParticipant {
+  id: number;
+  name: string;
+  image_path: string | null;
+}
+
+export interface FixtureTimelinePlayer {
+  id: number;
+  display_name: string;
+}
+
+export interface FixtureTimelineEvent {
+  id: number;
+  fixture_id: number;
+
+  sort_order: number;
+
+  time: FixtureTimelineTime;
+
+  period_id: number | null;
+  detailed_period_id: number | null;
+
+  section: string | null;
+
+  type: FixtureTimelineType;
+
+  participant: FixtureTimelineParticipant;
+
+  player: FixtureTimelinePlayer | null;
+
+  related_player: FixtureTimelinePlayer | null;
+}

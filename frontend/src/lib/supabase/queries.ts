@@ -1,4 +1,5 @@
 import type { User } from "@supabase/supabase-js";
+import { unstable_cache } from "next/cache";
 import { supabase, supabaseAnonKey, supabaseRestUrl } from "./client";
 import type {
   DashboardStats,
@@ -10,7 +11,7 @@ import type {
   UserProfile,
 } from "./types";
 import type { SquadPlayer } from "@/types/squad";
-import type { TeamFixture, FixtureLineups, FixtureStatistic } from "@/types/fixture";
+import type { TeamFixture, FixtureLineups, FixtureStatistic, FixtureTimelineEvent } from "@/types/fixture";
 import type { Team } from "@/types/team";
 
 type QueryResult<T> = { data: T | null; error: string | null };
@@ -612,47 +613,57 @@ export async function getFixtures(): Promise<QueryResult<Fixture[]>> {
 }
 
 export async function getFixtureLeagues(): Promise<QueryResult<FixtureLeagueDirectory[]>> {
-  const { data: leagues, error: leaguesError } = await fetchSupabaseData<Record<string, unknown>>(
-    "leagues",
-    "id,name,country_id,image_path",
-    {
-      order: "name.asc",
-    }
-  );
-
-  if (leaguesError) {
-    return { data: null, error: leaguesError };
-  }
-
-  const countryIds = Array.from(
-    new Set((leagues ?? []).map((league) => league.country_id).filter(Boolean))
-  );
-
-  const countriesResult =
-    countryIds.length > 0
-      ? await fetchSupabaseData<Record<string, unknown>>("countries", "id,name", {
-          id: `in.(${countryIds.join(",")})`,
-        })
-      : { data: [] as Record<string, unknown>[], error: null };
-
-  if (countriesResult.error) {
-    return { data: null, error: countriesResult.error };
-  }
-
-  const countryMap = new Map(
-    (countriesResult.data ?? []).map((country) => [
-      Number(country.id ?? 0),
-      String(country.name ?? ""),
-    ])
-  );
-
-  return {
-    data: (leagues ?? []).map((league) =>
-      normalizeFixtureLeagueRow(league, countryMap)
-    ),
-    error: null,
-  };
+  return getCachedFixtureLeagues();
 }
+
+const getCachedFixtureLeagues = unstable_cache(
+  async (): Promise<QueryResult<FixtureLeagueDirectory[]>> => {
+    const { data: leagues, error: leaguesError } = await fetchSupabaseData<Record<string, unknown>>(
+      "leagues",
+      "id,name,country_id,image_path",
+      {
+        order: "name.asc",
+      }
+    );
+
+    if (leaguesError) {
+      return { data: null, error: leaguesError };
+    }
+
+    const countryIds = Array.from(
+      new Set((leagues ?? []).map((league) => league.country_id).filter(Boolean))
+    );
+
+    const countriesResult =
+      countryIds.length > 0
+        ? await fetchSupabaseData<Record<string, unknown>>("countries", "id,name", {
+            id: `in.(${countryIds.join(",")})`,
+          })
+        : { data: [] as Record<string, unknown>[], error: null };
+
+    if (countriesResult.error) {
+      return { data: null, error: countriesResult.error };
+    }
+
+    const countryMap = new Map(
+      (countriesResult.data ?? []).map((country) => [
+        Number(country.id ?? 0),
+        String(country.name ?? ""),
+      ])
+    );
+
+    return {
+      data: (leagues ?? []).map((league) =>
+        normalizeFixtureLeagueRow(league, countryMap)
+      ),
+      error: null,
+    };
+  },
+  ["fixture-leagues-directory"],
+  {
+    revalidate: 600,
+  }
+);
 
 export async function getLeagueFixtureFilters(
   leagueId: number
@@ -904,6 +915,26 @@ export async function getFixtureStatistics(
       order: "type_id.asc",
     }
   );
+
+  return {
+    data: data ?? [],
+    error,
+  };
+}
+
+export async function getFixtureTimeline(
+  fixtureId: number
+): Promise<QueryResult<FixtureTimelineEvent[]>> {
+  const { data, error } = await fetchSupabaseData<FixtureTimelineEvent>(
+    "fixture_timeline_view",
+    "*",
+    {
+      fixture_id: `eq.${fixtureId}`,
+      order: "minute.asc",
+    }
+  );
+
+  console.log(data)
 
   return {
     data: data ?? [],

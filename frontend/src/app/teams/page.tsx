@@ -184,7 +184,10 @@ export default function TeamsPage() {
 
             <Select value={countryFilter} onValueChange={setCountryFilter}>
               <SelectTrigger>
-                <SelectValue placeholder="Country" />
+                <div className="flex min-w-0 items-center gap-1.5">
+                  <span className="shrink-0 text-zinc-500">Country:</span>
+                  <SelectValue placeholder="All" />
+                </div>
               </SelectTrigger>
 
               <SelectContent>
