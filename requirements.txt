@@ -1,0 +1,28 @@
+# Data
+pandas
+numpy
+requests
+python-dotenv
+
+# Dashboard
+streamlit
+streamlit-option-menu
+streamlit-aggrid
+streamlit-extras
+
+# Visualization
+plotly
+matplotlib
+mplsoccer
+
+# Utilities
+tqdm
+rich
+loguru
+
+# APIs
+fastapi
+uvicorn
+
+# Data Models
+pydantic
