@@ -27,7 +27,7 @@ export function Sidebar({
 
         <button
           onClick={onToggleCollapse}
-          className="-xl border border-zinc-800/70 bg-zinc-900/70 p-2 text-zinc-500 transition-all hover:border-zinc-700 hover:bg-zinc-900 hover:text-white"
+          className="-xl p-2 text-zinc-500 transition-all hover:border-zinc-700 hover:bg-zinc-900 hover:text-white"
         >
           {collapsed ? (
             <ChevronRight className="h-5 w-5" />

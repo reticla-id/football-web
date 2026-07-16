@@ -53,4 +53,4 @@ Thumbs.db
 
 .agents/
 
-*.backend/data/
+**/data

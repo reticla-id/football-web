@@ -11,6 +11,13 @@ interface SidebarNavItemProps {
   collapsed: boolean;
 }
 
+const badgeStyles: Record<string, string> = {
+  new: "text-red-400 group-hover:text-red-300",
+  soon: "text-sky-400 group-hover:text-sky-300",
+  beta: "text-amber-400 group-hover:text-amber-300",
+  alpha: "text-purple-400 group-hover:text-purple-300",
+};
+
 export function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
   const pathname = usePathname();
 
@@ -48,13 +55,28 @@ export function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
         </motion.div>
 
         {!collapsed ? (
-          <span
-            className={`relative z-10 font-medium transition-colors ${
-              active ? "text-white" : "text-zinc-400 group-hover:text-white"
-            }`}
-          >
-            {item.label}
-          </span>
+          <div className="relative z-10 flex items-start gap-1">
+            <span
+              className={`font-medium transition-colors ${
+                active ? "text-white" : "text-zinc-400 group-hover:text-white"
+              }`}
+            >
+              {item.label}
+            </span>
+
+            {item.badge && (
+              <sup
+                className={`text-[9px] font-semibold uppercase tracking-wide ${
+                  badgeStyles[item.badge?.toLowerCase() ?? ""] ??
+                  (active
+                    ? "accent-text"
+                    : "text-zinc-500 group-hover:text-zinc-300")
+                }`}
+              >
+                {item.badge}
+              </sup>
+            )}
+          </div>
         ) : null}
       </Link>
     </motion.div>

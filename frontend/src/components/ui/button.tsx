@@ -14,9 +14,13 @@ const baseClassName =
 
 const variants = {
   default:
-    "accent-border accent-bg accent-shadow text-black hover:brightness-110",
-  outline: "border-zinc-700 bg-zinc-950/70 text-zinc-100 hover:border-zinc-500 hover:bg-zinc-900",
-  ghost: "border-transparent bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-white",
+    "border-[var(--accent)] bg-[var(--accent)] text-black hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] shadow-[0_10px_30px_color-mix(in_srgb,var(--accent)_35%,transparent)]",
+
+  outline:
+    "border-zinc-700 bg-zinc-950/70 text-zinc-100 hover:border-zinc-500 hover:bg-zinc-900",
+
+  ghost:
+    "border-transparent bg-transparent text-zinc-300 hover:bg-zinc-900 hover:text-white",
 };
 
 const sizes = {

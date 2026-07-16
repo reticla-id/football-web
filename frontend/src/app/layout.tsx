@@ -18,7 +18,7 @@ const bebasNeue = Bebas_Neue({
 });
 
 export const metadata: Metadata = {
-  title: "Football Analytics Studio",
+  title: "Reticla | Football Intelligence",
   description:
     "A premium football analytics dashboard for clubs, players, and match insights.",
 };

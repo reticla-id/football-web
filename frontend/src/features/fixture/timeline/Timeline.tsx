@@ -6,7 +6,7 @@ export default function Timeline({ events }: { events: PreparedTimelineEvent[] }
     <div className="relative overflow-hidden border border-zinc-800/80 bg-zinc-900/70">
       <div className="pointer-events-none absolute bottom-0 left-1/2 top-0 w-px -translate-x-1/2 bg-zinc-800" />
 
-      <div className="divide-y divide-zinc-800">
+      <div className="divide-y-0">
         {events.map((event) => (
           <TimelineItem key={event.id} event={event} />
         ))}

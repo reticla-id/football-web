@@ -1,4 +1,4 @@
-import {Home, Newspaper, Users, CalendarDays, LineChart, Swords, Dna, Radar, Shield } from "lucide-react";
+import {Home, Newspaper, Users, CalendarDays, LineChart, Swords, BrainCircuit, Radar, Shield, Palette, BookOpenText, ChevronsLeftRightEllipsis } from "lucide-react";
 
 import type { SidebarSection } from "./types";
 
@@ -15,6 +15,7 @@ export const SECTIONS: SidebarSection[] = [
         href: "/news",
         label: "News",
         icon: Newspaper,
+        badge: "Soon",
       },
     ],
   },
@@ -35,11 +36,13 @@ export const SECTIONS: SidebarSection[] = [
         href: "/fixtures",
         label: "Fixtures",
         icon: CalendarDays,
+        badge: "New",
       },
       {
         href: "/analytics",
         label: "Analytics",
         icon: LineChart,
+        badge: "Soon",
       },
     ],
   },
@@ -47,19 +50,45 @@ export const SECTIONS: SidebarSection[] = [
     title: "Labs",
     items: [
       {
-        href: "/labs/match-up",
-        label: "Match Up",
-        icon: Swords,
-      },
-      {
-        href: "/labs/dna",
-        label: "DNA",
-        icon: Dna,
-      },
-      {
         href: "/labs/radar",
         label: "Radar",
         icon: Radar,
+        badge: "New",
+      },
+      {
+        href: "/labs/match-up",
+        label: "Match Up",
+        icon: Swords,
+        badge: "Soon",
+      },
+      {
+        href: "/labs/simulation",
+        label: "Simulation",
+        icon: BrainCircuit,
+        badge: "Soon",
+      },
+      {
+        href: "/labs/stidop",
+        label: "Studio",
+        icon: Palette,
+        badge: "Soon",
+      },
+    ],
+  },
+  {
+    title: "Extras",
+    items: [
+      {
+        href: "/labs/apis",
+        label: "API",
+        icon: ChevronsLeftRightEllipsis,
+        badge: "Soon",
+      },
+      {
+        href: "/labs/documentations",
+        label: "Docs",
+        icon: BookOpenText,
+        badge: "Soon",
       },
     ],
   },

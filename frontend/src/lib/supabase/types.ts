@@ -119,3 +119,24 @@ export interface DashboardStats {
     homeWins: number;
   };
 }
+
+export interface InsertShortlistCollection {
+  user_id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface ShortlistCollection {
+  id: number;
+  user_id: string;
+  name: string;
+  description: string | null;
+  created_at: string;
+}
+
+export interface ShortlistPlayer {
+  id: number;
+  shortlist_id: number;
+  player_id: number;
+  created_at: string;
+}

@@ -9,10 +9,14 @@ import type {
   FixtureSeasonOption,
   Player,
   UserProfile,
+  InsertShortlistCollection,
+  ShortlistCollection,
+  ShortlistPlayer
 } from "./types";
 import type { SquadPlayer } from "@/types/squad";
 import type { TeamFixture, FixtureLineups, FixtureStatistic, FixtureTimelineEvent } from "@/types/fixture";
 import type { Team } from "@/types/team";
+import type { PlayerSummary } from "@/types/player";
 
 type QueryResult<T> = { data: T | null; error: string | null };
 type FetchParams = Record<string, string | number | boolean | undefined> & {
@@ -934,10 +938,163 @@ export async function getFixtureTimeline(
     }
   );
 
-  console.log(data)
+  return {
+    data: data ?? [],
+    error,
+  };
+}
+
+export async function getPlayersSummary(): Promise<
+  QueryResult<PlayerSummary[]>
+> {
+  const { data, error } = await fetchSupabaseData<PlayerSummary>(
+    "player_summary_view",
+    "*",
+    {
+      limit: 50
+    }
+  );
 
   return {
     data: data ?? [],
     error,
+  };
+}
+
+export async function createShortlistCollection(
+  payload: InsertShortlistCollection
+): Promise<QueryResult<ShortlistCollection>> {
+  if (!supabase) {
+    return {
+      data: null,
+      error: "Supabase client is not initialized",
+    };
+  }
+
+  const { data, error } = await supabase
+    .from("shortlist_collections")
+    .insert(payload)
+    .select()
+    .single();
+
+  return {
+    data,
+    error: error?.message ?? null,
+  };
+}
+
+export async function getShortlistCollections(): Promise<
+  QueryResult<ShortlistCollection[]>
+> {
+  const { data, error } = await fetchSupabaseData<ShortlistCollection>(
+    "shortlist_collections",
+    "*",
+    {
+      order: "created_at.desc",
+    }
+  );
+
+  return {
+    data: data ?? [],
+    error,
+  };
+}
+
+export async function addPlayerToShortlist(
+  shortlistId: number,
+  playerId: number
+): Promise<QueryResult<null>> {
+  if (!supabase) {
+    return {
+      data: null,
+      error: "Supabase client is not initialized",
+    };
+  }
+
+  const { error } = await supabase
+    .from("shortlist_players")
+    .insert({
+      shortlist_id: shortlistId,
+      player_id: playerId,
+    });
+
+  return {
+    data: null,
+    error: error?.message ?? null,
+  };
+}
+
+export async function getShortlistPlayers(
+  shortlistId: number
+): Promise<QueryResult<PlayerSummary[]>> {
+  const { data: shortlistRows, error } = await fetchSupabaseData<
+    ShortlistPlayer
+  >(
+    "shortlist_players",
+    "*",
+    {
+      shortlist_id: `eq.${shortlistId}`,
+    }
+  );
+
+  if (error || !shortlistRows?.length) {
+    return {
+      data: [],
+      error,
+    };
+  }
+
+  const ids = shortlistRows.map((x) => x.player_id).join(",");
+
+  const { data, error: playerError } =
+    await fetchSupabaseData<PlayerSummary>(
+      "player_summary_view",
+      "*",
+      {
+        player_id: `in.(${ids})`,
+      }
+    );
+
+  return {
+    data: data ?? [],
+    error: playerError,
+  };
+}
+
+export async function removePlayerFromShortlist(
+  shortlistId: number,
+  playerId: number
+): Promise<QueryResult<null>> {
+  if (!supabase) {
+    return { data: null, error: "Supabase client is not initialized" };
+  }
+
+  const { error } = await supabase
+    .from("shortlist_players")
+    .delete()
+    .eq("shortlist_id", shortlistId)
+    .eq("player_id", playerId);
+
+  return {
+    data: null,
+    error: error?.message ?? null,
+  };
+}
+
+export async function deleteShortlistCollection(
+  shortlistId: number
+): Promise<QueryResult<null>> {
+  if (!supabase) {
+    return { data: null, error: "Supabase client is not initialized" };
+  }
+
+  const { error } = await supabase
+    .from("shortlist_collections")
+    .delete()
+    .eq("id", shortlistId);
+
+  return {
+    data: null,
+    error: error?.message ?? null,
   };
 }

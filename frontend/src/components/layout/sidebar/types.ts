@@ -15,6 +15,7 @@ export interface NavItemType {
   label: string;
   icon: React.ElementType;
   end?: boolean;
+  badge?: "Beta" | "Soon" | "New"
 }
 
 export interface SidebarSection {
