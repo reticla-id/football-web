@@ -1,4 +1,4 @@
-import type { FixtureTimelineEvent } from "@/types/fixture";
+import type { FixtureTimelineEvent, TeamFixture } from "@/types/fixture";
 
 import {
   TIMELINE_EVENT_CONFIG,
@@ -18,9 +18,10 @@ export interface PreparedTimelineEvent {
 }
 
 export function buildPreparedTimelineEvents(
-  events: FixtureTimelineEvent[]
+  events: FixtureTimelineEvent[],
+  fixture: TeamFixture
 ): PreparedTimelineEvent[] {
-  const participantMap = buildParticipantSideMap(events);
+  const participantMap = buildParticipantSideMap(events, fixture);
 
   return events
     .filter((event): event is FixtureTimelineEvent => Boolean(event))
@@ -94,8 +95,18 @@ function resolveEventSide(
   return "home";
 }
 
-function buildParticipantSideMap(events: FixtureTimelineEvent[]) {
+function buildParticipantSideMap(events: FixtureTimelineEvent[], fixture: TeamFixture) {
   const participantMap = new Map<number, TimelineSide>();
+  const homeParticipantId = getFixtureParticipantId(fixture, "home");
+  const awayParticipantId = getFixtureParticipantId(fixture, "away");
+
+  if (homeParticipantId != null) {
+    participantMap.set(homeParticipantId, "home");
+  }
+
+  if (awayParticipantId != null) {
+    participantMap.set(awayParticipantId, "away");
+  }
 
   for (const event of events) {
     const section = normalizeSection(event.section);
@@ -110,14 +121,31 @@ function buildParticipantSideMap(events: FixtureTimelineEvent[]) {
     const participantId = getParticipantId(event);
 
     if (participantId != null && !participantMap.has(participantId)) {
-      participantMap.set(
-        participantId,
-        participantMap.size === 0 ? "home" : "away"
-      );
+      const participantName = event.participant?.name?.trim().toLowerCase() ?? "";
+      const homeName = fixture.home.name.trim().toLowerCase();
+      const awayName = fixture.away.name.trim().toLowerCase();
+
+      if (participantName && participantName === homeName) {
+        participantMap.set(participantId, "home");
+        continue;
+      }
+
+      if (participantName && participantName === awayName) {
+        participantMap.set(participantId, "away");
+        continue;
+      }
+
+      participantMap.set(participantId, homeParticipantId == null ? "home" : "away");
     }
   }
 
   return participantMap;
+}
+
+function getFixtureParticipantId(fixture: TeamFixture, side: TimelineSide) {
+  const participant = side === "home" ? fixture.home : fixture.away;
+
+  return typeof participant.id === "number" ? participant.id : null;
 }
 
 function normalizeSection(section: string | null) {

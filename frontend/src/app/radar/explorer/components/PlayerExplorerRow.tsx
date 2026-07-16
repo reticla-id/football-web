@@ -42,7 +42,7 @@ export default function PlayerExplorerRow({
           <div className="min-w-0">
             <p className="truncate font-semibold text-white">{player.display_name}</p>
             <p className="truncate text-[11px] uppercase tracking-[0.18em] text-zinc-500">
-              {player.position_name}
+              {player.detailed_position_name}
             </p>
           </div>
 

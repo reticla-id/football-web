@@ -10,7 +10,7 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const baseClassName =
-  "focus-accent inline-flex items-center justify-center border text-sm font-semibold tracking-[0.02em] transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
+  "focus-accent inline-flex items-center justify-center text-sm font-semibold tracking-[0.02em] transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
 
 const variants = {
   default:

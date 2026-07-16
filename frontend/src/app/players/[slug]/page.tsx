@@ -3,8 +3,7 @@ import { AlertCircle, ArrowLeft } from "lucide-react";
 
 import PlayerDetailClient from "@/components/players/PlayerDetailClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { getPlayers } from "@/lib/supabase/queries";
-import type { Player } from "@/lib/supabase/types";
+import { getPlayersSummary } from "@/lib/supabase/queries";
 
 interface Props {
   params: Promise<{
@@ -14,7 +13,7 @@ interface Props {
 
 export default async function PlayerDetailPage({ params }: Props) {
   const { slug } = await params;
-  const { data: players, error } = await getPlayers();
+  const { data: players, error } = await getPlayersSummary();
 
   if (error) {
     return (
@@ -29,7 +28,7 @@ export default async function PlayerDetailPage({ params }: Props) {
   }
 
   const player =
-    players?.find((entry: Player) => (entry.slug ?? String(entry.id)) === slug) ?? null;
+    players?.find((entry) => slugify(entry.display_name) === slug) ?? null;
 
   if (!player) {
     return (
@@ -47,6 +46,14 @@ export default async function PlayerDetailPage({ params }: Props) {
       <PlayerDetailClient player={player} />
     </PlayerDetailPageShell>
   );
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 function PlayerDetailPageShell({ children }: { children: React.ReactNode }) {

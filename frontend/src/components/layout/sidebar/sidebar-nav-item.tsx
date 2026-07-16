@@ -20,8 +20,14 @@ const badgeStyles: Record<string, string> = {
 
 export function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
   const pathname = usePathname();
-
-  const active = item.end ? pathname === item.href : pathname.startsWith(item.href);
+  const radarAliasMatch =
+    item.href === "/labs/radar" &&
+    (pathname.startsWith("/radar") || pathname.startsWith("/labs/radar"));
+  const active = radarAliasMatch
+    ? true
+    : item.end
+      ? pathname === item.href
+      : pathname.startsWith(item.href);
   const Icon = item.icon;
 
   return (

@@ -1,10 +1,10 @@
 import { Flag, Ruler, Shirt, Shield, Timer } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
-import type { Player } from "@/lib/supabase/types";
+import type { PlayerSummary } from "@/types/player";
 
 interface Props {
-  player: Player;
+  player: PlayerSummary;
 }
 
 export default function PlayerHeader({ player }: Props) {
@@ -13,8 +13,8 @@ export default function PlayerHeader({ player }: Props) {
       <div className="grid gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 lg:px-10">
         <div className="mx-auto flex h-28 w-28 items-center justify-center -[24px] border border-zinc-800 bg-zinc-950 p-3 shadow-[0_18px_50px_rgba(0,0,0,0.35)] sm:h-32 sm:w-32 lg:mx-0">
           <img
-            src={player.avatar ?? "/placeholder-player.png"}
-            alt={player.name}
+            src={player.image_path ?? "/placeholder-player.png"}
+            alt={player.display_name}
             className="h-full w-full -[20px] object-cover"
             loading="eager"
             decoding="async"
@@ -28,18 +28,18 @@ export default function PlayerHeader({ player }: Props) {
             </p>
 
             <h1 className="font-display text-[3.1rem] leading-[0.92] text-white sm:text-[4rem] lg:text-[5rem]">
-              {player.name}
+              {player.display_name}
             </h1>
 
             <div className="flex flex-wrap items-center justify-center gap-2 text-sm text-zinc-400 lg:justify-start">
               <span className="-full border border-zinc-800 bg-zinc-950/70 px-3 py-1">
-                {player.club ?? "Club unavailable"}
+                {player.team_name ?? "Club unavailable"}
               </span>
               <span className="-full border border-zinc-800 bg-zinc-950/70 px-3 py-1">
-                {player.position ?? "Position unavailable"}
+                {player.position_name ?? "Position unavailable"}
               </span>
               <span className="-full border border-zinc-800 bg-zinc-950/70 px-3 py-1 font-medium text-zinc-300">
-                {player.number ? `#${player.number}` : "No number"}
+                {player.detailed_position_name ? `#${player.detailed_position_name}` : "No number"}
               </span>
             </div>
           </div>
@@ -53,7 +53,7 @@ export default function PlayerHeader({ player }: Props) {
             <HeaderPill
               icon={<Timer className="accent-text h-4 w-4" />}
               label="Age"
-              value={player.age ? String(player.age) : "-"}
+              value={player.date_of_birth ? String(player.date_of_birth) : "-"}
             />
             <HeaderPill
               icon={<Ruler className="accent-text h-4 w-4" />}
@@ -63,12 +63,12 @@ export default function PlayerHeader({ player }: Props) {
             <HeaderPill
               icon={<Shield className="accent-text h-4 w-4" />}
               label="Season"
-              value={player.season ?? "-"}
+              value={player.prefer_foot ?? "-"}
             />
             <HeaderPill
               icon={<Shirt className="accent-text h-4 w-4" />}
               label="Role"
-              value={player.position ?? "-"}
+              value={player.position_name ?? "-"}
             />
           </div>
         </div>

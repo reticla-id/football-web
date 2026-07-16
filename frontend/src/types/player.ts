@@ -56,8 +56,12 @@ export interface PlayerSummary {
   team_name: string | null;
   team_image_path: string | null;
 
+  league_name: string | null;
+  nationality: string | null;
+
   prefer_foot: string | null;
   position_name: string | null;
+  detailed_position_name: string | null;
 
   goals: number;
   assists: number;

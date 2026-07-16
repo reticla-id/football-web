@@ -3,12 +3,18 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { getFixtureTimeline } from "@/lib/supabase/queries";
-import type { FixtureTimelineEvent } from "@/types/fixture";
+import type { FixtureTimelineEvent, TeamFixture } from "@/types/fixture";
 
 import Timeline from "./Timeline";
 import { buildPreparedTimelineEvents } from "./timeline-utils";
 
-export default function FixtureTimeline({ fixtureId }: { fixtureId: number }) {
+export default function FixtureTimeline({
+  fixtureId,
+  fixture,
+}: {
+  fixtureId: number;
+  fixture: TeamFixture;
+}) {
   const [events, setEvents] = useState<FixtureTimelineEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -45,8 +51,8 @@ export default function FixtureTimeline({ fixtureId }: { fixtureId: number }) {
   }, [fixtureId]);
 
   const preparedEvents = useMemo(
-    () => buildPreparedTimelineEvents(events),
-    [events]
+    () => buildPreparedTimelineEvents(events, fixture),
+    [events, fixture]
   );
 
   if (isLoading) {

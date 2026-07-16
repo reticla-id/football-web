@@ -46,10 +46,10 @@ export default function CollectionPickerDialog({
           >
             <div className="border-b border-zinc-800 px-5 py-4">
               <p className="accent-text text-[11px] font-semibold uppercase tracking-[0.28em]">
-                Add to Collection
+                Shortlist
               </p>
               <h2 className="mt-2 font-display text-[2rem] leading-none text-white">
-                {hasCollections ? "Add to Collection" : "No Collections Yet"}
+                {hasCollections ? "Add to Shortlist" : "No Collections Yet"}
               </h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-zinc-400">
                 {hasCollections

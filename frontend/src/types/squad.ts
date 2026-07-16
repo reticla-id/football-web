@@ -27,6 +27,11 @@ export interface SquadPlayer {
         name: string;
     };
 
+    detailed_position: {
+        id: number;
+        name: string;
+    };
+
     team: {
         id: number;
         name: string;

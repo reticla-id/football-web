@@ -44,7 +44,7 @@ function PlayerRow({ player }: Props) {
 
           <div className="min-w-0">
             <p className="truncate font-semibold text-white">{player.player.name}</p>
-            <p className="text-xs text-zinc-500">{player.position.name}</p>
+            <p className="text-xs text-zinc-500">{player.detailed_position.name}</p>
           </div>
         </div>
       </td>

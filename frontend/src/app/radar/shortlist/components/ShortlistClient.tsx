@@ -14,6 +14,10 @@ import RadarExplorerPagination from "@/app/radar/explorer/components/RadarExplor
 import RadarExplorerTable from "@/app/radar/explorer/components/RadarExplorerTable";
 import RadarBackButton from "@/app/radar/components/RadarBackButton";
 import { loadUserShortlistData } from "@/app/radar/components/shortlist-utils";
+import {
+  readStoredState,
+  writeStoredState,
+} from "@/app/radar/components/storage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -40,18 +44,43 @@ import CreateCollectionModal from "./CreateCollectionModal";
 import ShortlistHeader from "./ShortlistHeader";
 
 const PAGE_SIZE = 25;
+const SHORTLIST_STORAGE_KEY = "radar-shortlist-state-v1";
 
 export default function ShortlistClient() {
   const [userId, setUserId] = useState<string | null>(null);
   const [collections, setCollections] = useState<ShortlistCollection[]>([]);
   const [links, setLinks] = useState<ShortlistPlayer[]>([]);
   const [players, setPlayers] = useState<ExplorerPlayer[]>([]);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<string>("");
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortState, setSortState] = useState<ExplorerSortState>({
-    column: null,
-    direction: null,
-  });
+  const [selectedCollectionId, setSelectedCollectionId] = useState(() =>
+    readStoredState(SHORTLIST_STORAGE_KEY, {
+      selectedCollectionId: "",
+      currentPage: 1,
+      sortState: {
+        column: null,
+        direction: null,
+      } satisfies ExplorerSortState,
+    }).selectedCollectionId
+  );
+  const [currentPage, setCurrentPage] = useState(() =>
+    readStoredState(SHORTLIST_STORAGE_KEY, {
+      selectedCollectionId: "",
+      currentPage: 1,
+      sortState: {
+        column: null,
+        direction: null,
+      } satisfies ExplorerSortState,
+    }).currentPage
+  );
+  const [sortState, setSortState] = useState<ExplorerSortState>(() =>
+    readStoredState(SHORTLIST_STORAGE_KEY, {
+      selectedCollectionId: "",
+      currentPage: 1,
+      sortState: {
+        column: null,
+        direction: null,
+      } satisfies ExplorerSortState,
+    }).sortState
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -165,6 +194,14 @@ export default function ShortlistClient() {
   useEffect(() => {
     setCurrentPage(1);
   }, [selectedCollectionId]);
+
+  useEffect(() => {
+    writeStoredState(SHORTLIST_STORAGE_KEY, {
+      selectedCollectionId,
+      currentPage,
+      sortState,
+    });
+  }, [currentPage, selectedCollectionId, sortState]);
 
   const handleSortChange = (column: ExplorerSortColumn) => {
     setSortState((current) => {
@@ -417,7 +454,7 @@ export default function ShortlistClient() {
               rowAction={
                 selectedCollection
                   ? {
-                      label: "Remove",
+                      label: "",
                       title: "Remove from Collection",
                       tone: "danger",
                       onClick: setPlayerToRemove,

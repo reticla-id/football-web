@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 
-import type { Player } from "@/lib/supabase/types";
+import type { PlayerSummary } from "@/types/player";
 
 import PlayerHeader from "./PlayerHeader";
 import PlayerTabs, { type PlayerTab } from "./PlayerTabs";
 
 interface Props {
-  player: Player;
+  player: PlayerSummary;
 }
 
 export default function PlayerDetailClient({ player }: Props) {

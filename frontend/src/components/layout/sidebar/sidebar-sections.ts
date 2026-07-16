@@ -68,7 +68,7 @@ export const SECTIONS: SidebarSection[] = [
         badge: "Soon",
       },
       {
-        href: "/labs/stidop",
+        href: "/labs/studio",
         label: "Studio",
         icon: Palette,
         badge: "Soon",

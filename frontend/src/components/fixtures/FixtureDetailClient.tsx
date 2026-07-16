@@ -115,7 +115,7 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
           <FixtureStatistics fixture={fixture} statistics={statistics} />
         ) : null}
         {tab === "timeline" ? (
-          <FixtureTimeline fixtureId={fixtureId} />
+          <FixtureTimeline fixtureId={fixtureId} fixture={fixture} />
         ) : null}
 
         {tab === "lineups" ? <LineupsPanel fixture={fixture} lineups={preparedLineups} /> : null}

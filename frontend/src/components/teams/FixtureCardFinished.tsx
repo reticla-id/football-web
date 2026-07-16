@@ -11,7 +11,16 @@ export default function FixtureCardFinished({ fixture }: Props) {
 
   return (
     <article className="border border-zinc-800/80 bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(10,10,10,0.96))] px-4 py-3 transition-colors duration-200 hover:border-zinc-600 sm:px-5">
-      <div className="space-y-2.5">
+      <div className="relative space-y-2.5">
+        {/* League Logo */}
+        <div className="absolute left-0 top-0">
+          <img
+            src={fixture.league.image_path ?? "/placeholder-club.png"}
+            alt={fixture.league.name}
+            className="h-12 w-12 object-contain"
+          />
+        </div>
+
         <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
           Match Week
         </p>
@@ -43,7 +52,9 @@ export default function FixtureCardFinished({ fixture }: Props) {
         <div className="flex items-center justify-center gap-2 text-xs text-zinc-500">
           <MapPin className="h-3.5 w-3.5 shrink-0" />
           <span className="truncate">{fixture.venue_name ?? "-"}</span>
+
           <span className="text-zinc-700">&bull;</span>
+
           <CalendarDays className="h-3.5 w-3.5 shrink-0" />
           <span className="text-zinc-400">
             {kickoff.toLocaleDateString("en-GB", {

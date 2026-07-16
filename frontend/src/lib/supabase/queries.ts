@@ -949,6 +949,7 @@ export async function getPlayersSummary(): Promise<
     "player_summary_view",
     "*",
     {
+      order: "display_name.asc"
     }
   );
 
@@ -1031,7 +1032,7 @@ export async function getShortlistPlayers(
     "*",
     {
       shortlist_id: `eq.${shortlistId}`,
-    }
+    },
   );
 
   if (error || !shortlistRows?.length) {

@@ -8,6 +8,10 @@ import { SearchX } from "lucide-react";
 import CollectionPickerDialog from "@/app/radar/components/CollectionPickerDialog";
 import RadarBackButton from "@/app/radar/components/RadarBackButton";
 import {
+  readStoredState,
+  writeStoredState,
+} from "@/app/radar/components/storage";
+import {
   hasPlayerInCollection,
   loadUserShortlistData,
 } from "@/app/radar/components/shortlist-utils";
@@ -27,17 +31,20 @@ import type { ShortlistCollection, ShortlistPlayer } from "@/lib/supabase/types"
 import type { PlayerSummary } from "@/types/player";
 
 const PAGE_SIZE = 25;
+const EXPLORER_STORAGE_KEY = "radar-explorer-state-v1";
 
 type FiltersState = {
   search: string;
+  minAge: number;
   maxAge: number;
+  minHeight: number;
   maxHeight: number;
-  position: string;
-  nationality: string;
-  country: string;
-  league: string;
-  transferStatus: string;
-  preferredFoot: string;
+  position: string[];
+  nationality: string[];
+  country: string[];
+  league: string[];
+  transferStatus: string[];
+  preferredFoot: string[];
   minimumGoals: number;
   minimumAssists: number;
   minimumPassAccuracy: number;
@@ -49,14 +56,16 @@ type FiltersState = {
 
 const defaultFilters: FiltersState = {
   search: "",
+  minAge: 16,
   maxAge: 40,
+  minHeight: 150,
   maxHeight: 220,
-  position: "All",
-  nationality: "All",
-  country: "All",
-  league: "All",
-  transferStatus: "All",
-  preferredFoot: "All",
+  position: [],
+  nationality: [],
+  country: [],
+  league: [],
+  transferStatus: [],
+  preferredFoot: [],
   minimumGoals: 0,
   minimumAssists: 0,
   minimumPassAccuracy: 0,
@@ -71,12 +80,36 @@ export default function RadarExplorerPage() {
   const [userId, setUserId] = useState<string | null>(null);
   const [collections, setCollections] = useState<ShortlistCollection[]>([]);
   const [shortlistLinks, setShortlistLinks] = useState<ShortlistPlayer[]>([]);
-  const [filters, setFilters] = useState<FiltersState>(defaultFilters);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [sortState, setSortState] = useState<ExplorerSortState>({
-    column: null,
-    direction: null,
-  });
+  const [filters, setFilters] = useState<FiltersState>(() =>
+    readStoredState(EXPLORER_STORAGE_KEY, {
+      filters: defaultFilters,
+      currentPage: 1,
+      sortState: {
+        column: null,
+        direction: null,
+      } satisfies ExplorerSortState,
+    }).filters
+  );
+  const [currentPage, setCurrentPage] = useState(() =>
+    readStoredState(EXPLORER_STORAGE_KEY, {
+      filters: defaultFilters,
+      currentPage: 1,
+      sortState: {
+        column: null,
+        direction: null,
+      } satisfies ExplorerSortState,
+    }).currentPage
+  );
+  const [sortState, setSortState] = useState<ExplorerSortState>(() =>
+    readStoredState(EXPLORER_STORAGE_KEY, {
+      filters: defaultFilters,
+      currentPage: 1,
+      sortState: {
+        column: null,
+        direction: null,
+      } satisfies ExplorerSortState,
+    }).sortState
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const [isAddingToCollection, setIsAddingToCollection] = useState(false);
@@ -130,6 +163,14 @@ export default function RadarExplorerPage() {
     return ages.length ? Math.max(...ages) : 40;
   }, [players]);
 
+  const minAvailableAge = useMemo(() => {
+    const ages = players
+      .map((player) => player.age)
+      .filter((age): age is number => age != null);
+
+    return ages.length ? Math.min(...ages) : 16;
+  }, [players]);
+
   const maxAvailableHeight = useMemo(() => {
     const heights = players
       .map((player) => player.height)
@@ -138,33 +179,41 @@ export default function RadarExplorerPage() {
     return heights.length ? Math.max(...heights) : 220;
   }, [players]);
 
+  const minAvailableHeight = useMemo(() => {
+    const heights = players
+      .map((player) => player.height)
+      .filter((height): height is number => height != null);
+
+    return heights.length ? Math.min(...heights) : 150;
+  }, [players]);
+
   const availableLeagues = useMemo(
-    () => ["All", ...getUniqueValues(players.map((player) => player.league))],
+    () => getUniqueValues(players.map((player) => player.league)),
     [players]
   );
 
   const availableCountries = useMemo(
-    () => ["All", ...getUniqueValues(players.map((player) => player.country))],
+    () => getUniqueValues(players.map((player) => player.country)),
     [players]
   );
 
   const availableNationalities = useMemo(
-    () => ["All", ...getUniqueValues(players.map((player) => player.nationality))],
+    () => getUniqueValues(players.map((player) => player.nationality)),
     [players]
   );
 
   const availablePositions = useMemo(
-    () => ["All", ...getUniqueValues(players.map((player) => player.positionLabel))],
+    () => getUniqueValues(players.map((player) => player.positionLabel)),
     [players]
   );
 
   const availableTransferStatuses = useMemo(
-    () => ["All", ...getUniqueValues(players.map((player) => player.transferStatus))],
+    () => getUniqueValues(players.map((player) => player.transferStatus)),
     [players]
   );
 
   const availablePreferredFeet = useMemo(
-    () => ["All", ...getUniqueValues(players.map((player) => player.prefer_foot))],
+    () => getUniqueValues(players.map((player) => player.prefer_foot)),
     [players]
   );
 
@@ -179,22 +228,26 @@ export default function RadarExplorerPage() {
   );
 
   const leagueOptions = useMemo(() => {
-    if (filters.country === "All") {
+    if (filters.country.length === 0) {
       return availableLeagues;
     }
 
-    const leagues = getUniqueValues(
+    return getUniqueValues(
       players
-        .filter((player) => player.country === filters.country)
+        .filter(
+          (player) => player.country && filters.country.includes(player.country)
+        )
         .map((player) => player.league)
     );
-
-    return ["All", ...leagues];
   }, [availableLeagues, filters.country, players]);
 
   useEffect(() => {
-    if (!leagueOptions.includes(filters.league)) {
-      setFilters((current) => ({ ...current, league: "All" }));
+    const filteredLeagueValues = filters.league.filter((value) =>
+      leagueOptions.includes(value)
+    );
+
+    if (filteredLeagueValues.length !== filters.league.length) {
+      setFilters((current) => ({ ...current, league: filteredLeagueValues }));
     }
   }, [filters.league, leagueOptions]);
 
@@ -209,22 +262,30 @@ export default function RadarExplorerPage() {
         player.positionLabel.toLowerCase().includes(keyword) ||
         player.playstyles.some((playstyle) => playstyle.toLowerCase().includes(keyword));
 
-      const matchesAge = player.age == null || player.age <= filters.maxAge;
-      const matchesHeight = player.height == null || player.height <= filters.maxHeight;
+      const matchesAge =
+        player.age == null ||
+        (player.age >= filters.minAge && player.age <= filters.maxAge);
+      const matchesHeight =
+        player.height == null ||
+        (player.height >= filters.minHeight && player.height <= filters.maxHeight);
       const matchesPosition =
-        filters.position === "All" || player.positionLabel === filters.position;
+        filters.position.length === 0 || filters.position.includes(player.positionLabel);
       const matchesNationality =
-        filters.nationality === "All" || player.nationality === filters.nationality;
+        filters.nationality.length === 0 ||
+        (player.nationality != null && filters.nationality.includes(player.nationality));
       const matchesCountry =
-        filters.country === "All" || player.country === filters.country;
+        filters.country.length === 0 ||
+        (player.country != null && filters.country.includes(player.country));
       const matchesLeague =
-        filters.league === "All" || player.league === filters.league;
+        filters.league.length === 0 ||
+        (player.league != null && filters.league.includes(player.league));
       const matchesTransferStatus =
-        filters.transferStatus === "All" ||
-        player.transferStatus === filters.transferStatus;
+        filters.transferStatus.length === 0 ||
+        (player.transferStatus != null &&
+          filters.transferStatus.includes(player.transferStatus));
       const matchesPreferredFoot =
-        filters.preferredFoot === "All" ||
-        (player.prefer_foot ?? "Unknown") === filters.preferredFoot;
+        filters.preferredFoot.length === 0 ||
+        (player.prefer_foot != null && filters.preferredFoot.includes(player.prefer_foot));
       const matchesGoals = player.goals >= filters.minimumGoals;
       const matchesAssists = player.assists >= filters.minimumAssists;
       const matchesPassAccuracy =
@@ -282,6 +343,14 @@ export default function RadarExplorerPage() {
     title: "No players found",
     description: "Try adjusting your scouting filters.",
   };
+
+  useEffect(() => {
+    writeStoredState(EXPLORER_STORAGE_KEY, {
+      filters,
+      currentPage,
+      sortState,
+    });
+  }, [currentPage, filters, sortState]);
 
   useEffect(() => {
     if (!toastMessage) {
@@ -370,7 +439,9 @@ export default function RadarExplorerPage() {
               setFilters(nextFilters);
               setCurrentPage(1);
             }}
+            minAvailableAge={minAvailableAge}
             maxAvailableAge={maxAvailableAge}
+            minAvailableHeight={minAvailableHeight}
             maxAvailableHeight={maxAvailableHeight}
             positionOptions={availablePositions}
             nationalityOptions={availableNationalities}
@@ -389,8 +460,8 @@ export default function RadarExplorerPage() {
               sortState={sortState}
               onSortChange={handleSortChange}
               rowAction={{
-                label: "Save",
-                title: "Add to Collection",
+                label: "",
+                title: "Add to Shortlist",
                 tone: "accent",
                 onClick: handleOpenCollectionPicker,
               }}
@@ -464,12 +535,12 @@ function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
     slug: slugify(player.display_name),
     age,
     appearances,
-    positionLabel: player.position_name?.trim() || "Profile unavailable",
+    positionLabel: player.detailed_position_name?.trim() || "Profile unavailable",
     clubName: player.team_name?.trim() || "Club unavailable",
     clubLogo: player.team_image_path ?? null,
-    nationality: null,
+    nationality: player.nationality?.trim() || null,
     country: null,
-    league: null,
+    league: player.league_name?.trim() || null,
     transferStatus: null,
     passAccuracyValue,
     tacklesPer90,

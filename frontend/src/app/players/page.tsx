@@ -13,13 +13,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getPlayers } from "@/lib/supabase/queries";
-import type { Player } from "@/lib/supabase/types";
+import { getPlayersSummary } from "@/lib/supabase/queries";
+import type { PlayerSummary } from "@/types/player";
 
 const ITEMS_PER_PAGE = 25;
 
 export default function PlayersPage() {
-  const [players, setPlayers] = useState<Player[]>([]);
+  const [players, setPlayers] = useState<PlayerSummary[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -32,7 +32,7 @@ export default function PlayersPage() {
     const loadPlayers = async () => {
       setLoading(true);
 
-      const { data, error: queryError } = await getPlayers();
+      const { data, error: queryError } = await getPlayersSummary();
 
       if (queryError || !data) {
         setError(queryError ?? "Unable to load players.");
@@ -54,7 +54,7 @@ export default function PlayersPage() {
       ...Array.from(
         new Set(
           players
-            .map((player) => player.league?.trim())
+            .map((player) => player.league_name?.trim())
             .filter((value): value is string => Boolean(value))
         )
       ).sort((a, b) => a.localeCompare(b)),
@@ -66,14 +66,14 @@ export default function PlayersPage() {
     const visiblePlayers =
       leagueFilter === "All"
         ? players
-        : players.filter((player) => player.league === leagueFilter);
+        : players.filter((player) => player.league_name === leagueFilter);
 
     return [
       "All",
       ...Array.from(
         new Set(
           visiblePlayers
-            .map((player) => player.club?.trim())
+            .map((player) => player.team_name?.trim())
             .filter((value): value is string => Boolean(value))
         )
       ).sort((a, b) => a.localeCompare(b)),
@@ -86,7 +86,10 @@ export default function PlayersPage() {
       ...Array.from(
         new Set(
           players
-            .map((player) => player.position?.trim())
+            .map(
+              (player) =>
+                player.detailed_position_name?.trim() ?? player.position_name?.trim()
+            )
             .filter((value): value is string => Boolean(value))
         )
       ).sort((a, b) => a.localeCompare(b)),
@@ -104,18 +107,19 @@ export default function PlayersPage() {
     const keyword = search.trim().toLowerCase();
 
     return players.filter((player) => {
+      const position =
+        player.detailed_position_name?.trim() ?? player.position_name?.trim() ?? "";
       const matchesSearch =
         keyword === "" ||
-        (player.name ?? "").toLowerCase().includes(keyword) ||
-        (player.club ?? "").toLowerCase().includes(keyword) ||
-        (player.league ?? "").toLowerCase().includes(keyword) ||
-        (player.position ?? "").toLowerCase().includes(keyword) ||
+        player.display_name.toLowerCase().includes(keyword) ||
+        (player.team_name ?? "").toLowerCase().includes(keyword) ||
+        (player.league_name ?? "").toLowerCase().includes(keyword) ||
+        position.toLowerCase().includes(keyword) ||
         (player.nationality ?? "").toLowerCase().includes(keyword);
 
-      const matchesLeague = leagueFilter === "All" || player.league === leagueFilter;
-      const matchesClub = clubFilter === "All" || player.club === clubFilter;
-      const matchesPosition =
-        positionFilter === "All" || player.position === positionFilter;
+      const matchesLeague = leagueFilter === "All" || player.league_name === leagueFilter;
+      const matchesClub = clubFilter === "All" || player.team_name === clubFilter;
+      const matchesPosition = positionFilter === "All" || position === positionFilter;
 
       return matchesSearch && matchesLeague && matchesClub && matchesPosition;
     });
@@ -126,6 +130,17 @@ export default function PlayersPage() {
   const paginatedPlayers = filteredPlayers.slice(
     (safeCurrentPage - 1) * ITEMS_PER_PAGE,
     safeCurrentPage * ITEMS_PER_PAGE
+  );
+  const paginatedPlayersWithMeta = useMemo(
+    () =>
+      paginatedPlayers.map((player) => ({
+        ...player,
+        slug: slugify(player.display_name),
+        age: getAgeFromDateOfBirth(player.date_of_birth),
+        position:
+          player.detailed_position_name?.trim() ?? player.position_name?.trim() ?? null,
+      })),
+    [paginatedPlayers]
   );
 
   return (
@@ -184,7 +199,7 @@ export default function PlayersPage() {
               }}
             >
               <SelectTrigger>
-                <LabeledSelectValue label="Country" placeholder="All" />
+                <LabeledSelectValue label="Team" placeholder="All" />
               </SelectTrigger>
 
               <SelectContent>
@@ -228,30 +243,32 @@ export default function PlayersPage() {
         ) : null}
 
         <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {paginatedPlayers.map((player) => (
+          {paginatedPlayersWithMeta.map((player) => (
             <Link
-              key={player.id}
-              href={`/players/${player.slug ?? player.id}`}
+              key={player.player_id}
+              href={`/players/${player.slug}`}
               className="block"
             >
               <Card className="h-full transition-all duration-200 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
                 <CardContent className="flex items-center gap-4 p-4">
                   <img
-                    src={player.avatar ?? "/placeholder-player.png"}
-                    alt={player.name}
+                    src={player.image_path ?? "/placeholder-player.png"}
+                    alt={player.display_name}
                     className="h-14 w-14 rounded-full object-cover"
                   />
 
                   <div className="min-w-0 flex-1">
-                    <h3 className="truncate font-semibold text-white">{player.name}</h3>
+                    <h3 className="truncate font-semibold text-white">
+                      {player.display_name}
+                    </h3>
 
                     <div className="mt-1 flex items-center justify-between gap-4">
                       <span className="truncate text-sm text-zinc-400">
-                        {player.club ?? "Club unavailable"}
+                        {player.team_name ?? "Club unavailable"}
                       </span>
 
                       <span className="text-sm text-zinc-300">
-                        {player.number ? `#${player.number}` : "-"}
+                        {player.age ? `${player.age} y/o` : "-"}
                       </span>
                     </div>
 
@@ -259,13 +276,13 @@ export default function PlayersPage() {
                       {player.position ?? "Position unavailable"}
                     </p>
                     <p className="mt-1 text-[11px] uppercase tracking-[0.18em] text-zinc-600">
-                      {player.league ?? "League unavailable"}
+                      {player.league_name ?? "League unavailable"}
                     </p>
                   </div>
 
                   <img
-                    src={player.club_image_path ?? "/placeholder-club.png"}
-                    alt={player.club ?? "Club crest"}
+                    src={player.team_image_path ?? "/placeholder-club.png"}
+                    alt={player.team_name ?? "Club crest"}
                     className="h-8 w-8 object-contain"
                   />
                 </CardContent>
@@ -316,6 +333,38 @@ export default function PlayersPage() {
       </div>
     </div>
   );
+}
+
+function getAgeFromDateOfBirth(dateOfBirth: string | null) {
+  if (!dateOfBirth) {
+    return null;
+  }
+
+  const birthDate = new Date(dateOfBirth);
+  if (Number.isNaN(birthDate.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age;
+}
+
+function slugify(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 function LabeledSelectValue({
