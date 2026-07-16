@@ -25,7 +25,7 @@ const radarModes = [
     href: "/radar/shortlist",
     title: "Shortlist",
     description:
-      "Saved and Monitor Shortlisted Players.",
+      "Track, organize, and monitor shortlisted players across multiple scouting collections.",
     Icon: DatabaseSearch,
   },
 ] as const;

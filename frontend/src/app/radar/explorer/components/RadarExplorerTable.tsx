@@ -64,7 +64,7 @@ export default function RadarExplorerTable({
           Player Pool
         </h3>
         <p className="mt-1 text-xs uppercase tracking-[0.24em] text-zinc-500">
-          Scouting shortlist
+          Listed Players by Criteria
         </p>
       </div>
 
