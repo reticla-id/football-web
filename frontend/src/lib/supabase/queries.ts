@@ -219,10 +219,10 @@ export async function getCurrentUserProfile(): Promise<QueryResult<UserProfile |
 
 export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
   const [{ data: standings, error: standingsError }, { data: topScorers, error: topScorersError }, { data: assists, error: assistsError }, { data: redCards, error: redCardsError }] = await Promise.all([
-    fetchSupabaseData<Record<string, unknown>>("standing_table", "position, points, participant, league, result, details, form", { limit: 50, order: "position.asc" }),
-    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.208", limit: 10, order: "total.desc" }),
-    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.209", limit: 10, order: "total.desc" }),
-    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.83", limit: 10, order: "total.desc" }),
+    fetchSupabaseData<Record<string, unknown>>("standing_table", "position, points, participant, league, result, details, form", { order: "position.asc" }),
+    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.208", limit:10,  order: "total.desc" }),
+    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.209", limit:10, order: "total.desc" }),
+    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.83", limit:10, order: "total.desc" }),
   ]);
 
   if (standingsError || topScorersError || assistsError || redCardsError) {
@@ -508,7 +508,6 @@ export async function getPlayers(): Promise<QueryResult<Player[]>> {
       league
     `,
     {
-      limit: 50,
       order: "display_name.asc",
     }
   );
@@ -603,8 +602,7 @@ export async function getFixtures(): Promise<QueryResult<Fixture[]>> {
       away
     `,
     {
-      order: "starting_at.desc",
-      limit: 50,
+      order: "starting_at.desc"
     }
   );
 
@@ -951,7 +949,6 @@ export async function getPlayersSummary(): Promise<
     "player_summary_view",
     "*",
     {
-      limit: 50
     }
   );
 

@@ -85,10 +85,12 @@ h3 {
 
 .accent-text {
   color: var(--accent);
+  text-shadow: none;
 }
 
 .accent-text-soft {
   color: color-mix(in srgb, var(--accent) 82%, white 18%);
+  text-shadow: none;
 }
 
 .accent-bg {
@@ -117,6 +119,7 @@ h3 {
 
 .hover-accent-text:hover {
   color: var(--accent);
+  text-shadow: none;
 }
 
 .focus-accent:focus-visible {
