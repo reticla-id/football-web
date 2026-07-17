@@ -7,9 +7,10 @@ import { SidebarNavItem } from "./sidebar-nav-item";
 
 interface SidebarNavProps {
   collapsed: boolean;
+  onItemSelect?: () => void;
 }
 
-export function SidebarNav({ collapsed }: SidebarNavProps) {
+export function SidebarNav({ collapsed, onItemSelect }: SidebarNavProps) {
   return (
     <LayoutGroup id="sidebar-nav">
       <nav className="flex-1 overflow-y-auto px-4 py-4">
@@ -36,7 +37,12 @@ export function SidebarNav({ collapsed }: SidebarNavProps) {
 
             <div className="space-y-1">
               {section.items.map((item) => (
-                <SidebarNavItem key={item.href} item={item} collapsed={collapsed} />
+                <SidebarNavItem
+                  key={item.href}
+                  item={item}
+                  collapsed={collapsed}
+                  onSelect={onItemSelect}
+                />
               ))}
             </div>
           </motion.div>

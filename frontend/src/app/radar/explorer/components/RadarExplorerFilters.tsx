@@ -98,11 +98,11 @@ export default function RadarExplorerFilters({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut", delay: 0.08 }}
-      className="xl:sticky xl:top-6"
+      className="mx-auto w-full max-w-[560px] xl:sticky xl:top-6 xl:mx-0 xl:max-w-[292px]"
     >
       <Card className="border-zinc-800/80 bg-zinc-900/70">
-        <CardContent className="space-y-5 p-5">
-          <div className="flex items-center justify-between gap-3">
+        <CardContent className="space-y-5 p-4 lg:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
                 Scouting Filters
@@ -136,6 +136,7 @@ export default function RadarExplorerFilters({
                   onFiltersChange({ ...filters, search: event.target.value })
                 }
                 placeholder="Search player name..."
+                className="h-10"
               />
 
               <RangeField
@@ -341,7 +342,7 @@ function MultiSelectField({
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="focus-accent flex h-11 w-full items-center justify-between border border-zinc-800 bg-zinc-950/75 px-4 text-left text-sm text-zinc-200 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-900"
+        className="focus-accent flex h-10 w-full items-center justify-between border border-zinc-800 bg-zinc-950/75 px-3 text-left text-sm text-zinc-200 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-900"
       >
         <div className="flex min-w-0 items-center gap-1.5 text-xs">
           <span className="shrink-0 uppercase tracking-[0.16em] text-zinc-500">

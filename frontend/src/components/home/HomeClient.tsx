@@ -559,7 +559,7 @@ export default function HomeClient() {
                     </div>
 
                     <Link
-                      href="/teams"
+                      href="/players"
                       className="hover-accent-text accent-text inline-flex items-center gap-2 text-sm font-medium transition"
                     >
                       Browse players

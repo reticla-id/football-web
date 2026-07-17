@@ -23,10 +23,10 @@ export default function PlayerExplorerRow({
   };
 }) {
   const rowGridClassName = rowAction
-    ? "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px_52px]"
-    : "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px]";
-  const contentSpanClassName = rowAction ? "col-span-7" : "col-span-6";
-  const detailCardSpanClassName = rowAction ? "col-span-8" : "col-span-7";
+    ? "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px_44px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px_48px]"
+    : "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px]";
+  const contentSpanClassName = rowAction ? "md:col-span-7" : "md:col-span-6";
+  const detailCardSpanClassName = rowAction ? "md:col-span-8" : "md:col-span-7";
   const detailStats = [
     { label: "Successful Passes", value: player.successful_passes },
     { label: "Pass Accuracy %", value: formatPercentage(player.pass_accuracy) },
@@ -37,18 +37,18 @@ export default function PlayerExplorerRow({
 
   return (
     <div
-      className={`grid ${rowGridClassName} items-center gap-3 border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75`}
+      className={`grid grid-cols-1 ${rowGridClassName} items-center gap-3 border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75`}
     >
       <motion.button
         type="button"
         whileHover={{ x: 4 }}
         transition={{ duration: 0.18, ease: "easeOut" }}
         onClick={() => onToggleExpanded?.(player.player_id)}
-        className={`${contentSpanClassName} grid grid-cols-subgrid items-center gap-3 text-left`}
+        className={`${contentSpanClassName} text-left md:grid md:grid-cols-subgrid md:items-center md:gap-3`}
         aria-expanded={isExpanded}
         aria-controls={`radar-player-panel-${player.player_id}`}
       >
-        <div className="flex min-w-0 items-center gap-3">
+        <div className="flex min-w-0 items-center gap-4 pl-2 md:pl-3 xl:pl-4">
           <img
             src={player.image_path ?? "/placeholder-player.png"}
             alt={player.display_name}
@@ -62,26 +62,44 @@ export default function PlayerExplorerRow({
             </p>
           </div>
 
-          <div className="ml-auto flex justify-end">
+          <div className="ml-auto flex justify-end pr-1 md:pr-2">
             <img
               src={player.team_image_path ?? "/placeholder-club.png"}
               alt={player.clubName}
-              className="h-7 w-7 shrink-0 object-contain"
+              className="h-8 w-8 shrink-0 object-contain"
             />
           </div>
         </div>
 
-        <div className="text-sm text-zinc-300">{player.age ?? "-"}</div>
-        <div className="text-sm text-zinc-300">
-          {player.heightValue != null ? `${player.heightValue} cm` : "-"}
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400 md:mt-0 md:contents">
+          <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Age</span>
+            {player.age ?? "-"}
+          </div>
+          <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Height</span>
+            {player.heightValue != null ? `${player.heightValue} cm` : "-"}
+          </div>
+          <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Foot</span>
+            {player.prefer_foot ?? "-"}
+          </div>
+          <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Apps</span>
+            {player.appearances ?? "-"}
+          </div>
+          <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 font-medium text-white md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm">
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Goals</span>
+            {player.goals}
+          </div>
+          <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 font-medium text-white md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm">
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Assists</span>
+            {player.assists}
+          </div>
         </div>
-        <div className="text-sm text-zinc-300">{player.prefer_foot ?? "-"}</div>
-        <div className="text-sm text-zinc-300">{player.appearances ?? "-"}</div>
-        <div className="text-sm font-medium text-white">{player.goals}</div>
-        <div className="text-sm font-medium text-white">{player.assists}</div>
       </motion.button>
 
-      <div className="flex justify-end">
+      <div className="mt-3 flex justify-end md:mt-0">
         {rowAction ? (
           <motion.button
             type="button"

@@ -9,6 +9,7 @@ import type { NavItemType } from "./types";
 interface SidebarNavItemProps {
   item: NavItemType;
   collapsed: boolean;
+  onSelect?: () => void;
 }
 
 const badgeStyles: Record<string, string> = {
@@ -18,7 +19,7 @@ const badgeStyles: Record<string, string> = {
   alpha: "text-purple-400 group-hover:text-purple-300",
 };
 
-export function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
+export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProps) {
   const pathname = usePathname();
   const radarAliasMatch =
     item.href === "/radar" &&
@@ -34,6 +35,7 @@ export function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
     <motion.div whileHover={{ x: 3 }} whileTap={{ scale: 0.98 }} transition={{ duration: 0.18 }}>
       <Link
         href={item.href}
+        onClick={onSelect}
         className="group relative flex items-center gap-3 overflow-hidden -xl px-3.5 py-3 text-base transition-colors"
       >
         {active ? (

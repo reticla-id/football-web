@@ -123,12 +123,12 @@ export default function SignInPage() {
                 Forgot password?
               </Link>
 
-              <Link
+              {/* <Link
                 href="/sign-up"
                 className="accent-text"
               >
                 Create account
-              </Link>
+              </Link> */}
 
             </div>
 
@@ -240,7 +240,7 @@ export default function SignInPage() {
                   </span>
 
                   <span className="font-semibold text-white">
-                    24+
+                    15+
                   </span>
 
                 </div>
@@ -252,7 +252,7 @@ export default function SignInPage() {
                   </span>
 
                   <span className="font-semibold text-white">
-                    650+
+                    300+
                   </span>
 
                 </div>
@@ -264,7 +264,7 @@ export default function SignInPage() {
                   </span>
 
                   <span className="font-semibold text-white">
-                    30,000+
+                    15,000+
                   </span>
 
                 </div>

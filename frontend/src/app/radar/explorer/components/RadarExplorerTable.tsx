@@ -50,8 +50,8 @@ export default function RadarExplorerTable({
   const EmptyIcon = emptyState.icon;
   const hasAction = Boolean(rowAction);
   const gridClassName = hasAction
-    ? "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px_52px]"
-    : "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px]";
+    ? "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px_44px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px_48px]"
+    : "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px]";
   const columns: Array<{ key: ExplorerSortColumn; label: string }> = [
     { key: "display_name", label: "Player" },
     { key: "age", label: "Age" },
@@ -73,38 +73,41 @@ export default function RadarExplorerTable({
         </p>
       </div>
 
-      <div className="border-b border-zinc-800 bg-zinc-950/60 px-4 py-3">
-        <div
-          className={cn(
-            "grid gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500",
-            gridClassName
-          )}
-        >
-          {columns.map((column) => {
-            const active = sortState?.column === column.key;
-            const direction = active ? sortState?.direction : null;
+      <div className="hidden border-b border-zinc-800 bg-zinc-950/60 px-4 py-3 md:block">
+        <div className="-mx-4 overflow-x-auto px-4 xl:overflow-visible">
+          <div
+            className={cn(
+              "grid min-w-[820px] gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500 xl:min-w-0",
+              gridClassName
+            )}
+          >
+            {columns.map((column, index) => {
+              const active = sortState?.column === column.key;
+              const direction = active ? sortState?.direction : null;
 
-            return (
-              <button
-                key={column.key}
-                type="button"
-                onClick={() => onSortChange?.(column.key)}
-                className={cn(
-                  "flex items-center gap-1.5 text-left transition-colors hover:text-white",
-                  !onSortChange && "pointer-events-none"
-                )}
-                aria-label={`Sort by ${column.label}`}
-              >
-                <span>{column.label}</span>
-                {direction === "asc" ? (
-                  <ChevronUp className="h-3.5 w-3.5 text-white" />
-                ) : direction === "desc" ? (
-                  <ChevronDown className="h-3.5 w-3.5 text-white" />
-                ) : null}
-              </button>
-            );
-          })}
-          {hasAction ? <div className="text-right">{rowAction?.label}</div> : null}
+              return (
+                <button
+                  key={column.key}
+                  type="button"
+                  onClick={() => onSortChange?.(column.key)}
+                  className={cn(
+                    "flex items-center gap-1.5 text-left transition-colors hover:text-white",
+                    index === 0 && "pl-3 xl:pl-4",
+                    !onSortChange && "pointer-events-none"
+                  )}
+                  aria-label={`Sort by ${column.label}`}
+                >
+                  <span>{column.label}</span>
+                  {direction === "asc" ? (
+                    <ChevronUp className="h-3.5 w-3.5 text-white" />
+                  ) : direction === "desc" ? (
+                    <ChevronDown className="h-3.5 w-3.5 text-white" />
+                  ) : null}
+                </button>
+              );
+            })}
+            {hasAction ? <div className="text-right">{rowAction?.label}</div> : null}
+          </div>
         </div>
       </div>
 

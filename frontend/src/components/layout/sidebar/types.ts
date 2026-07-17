@@ -4,8 +4,10 @@ export interface SidebarProps {
   currentUser: UserProfile | null;
   theme: string;
   collapsed: boolean;
+  mobileOpen?: boolean;
   onSearch?: () => void;
   onToggleCollapse: () => void;
+  onCloseMobile?: () => void;
   onToggleTheme: () => void;
   onLogout: () => void | Promise<void>;
 }
