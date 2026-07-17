@@ -22,7 +22,7 @@ export default function FixtureCardFinished({ fixture }: Props) {
         </div>
 
         <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-          Match Week
+          Match Week {fixture.round_name}
         </p>
 
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">

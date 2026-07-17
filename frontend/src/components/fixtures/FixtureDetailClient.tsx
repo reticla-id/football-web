@@ -26,8 +26,9 @@ interface Props {
 
 export default function FixtureDetailClient({ league, fixture, lineups, statistics }: Props) {
   const [tab, setTab] = useState<FixtureTab>("match-facts");
+  const [currentTimestamp] = useState(() => Date.now());
   const kickoff = new Date(fixture.starting_at);
-  const hasStarted = kickoff.getTime() <= Date.now();
+  const hasStarted = kickoff.getTime() <= currentTimestamp;
   const fixtureId = typeof fixture?.id === "number" ? fixture.id : 0;
   const homeName = fixture?.home?.name ?? "Home Team";
   const awayName = fixture?.away?.name ?? "Away Team";
@@ -162,7 +163,11 @@ function LineupsPanel({
   fixture: TeamFixture;
   lineups: PreparedFixtureLineups;
 }) {
-  const hasAnyLineup = lineups.home.players.length > 0 || lineups.away.players.length > 0;
+  const hasAnyLineup =
+    lineups.home.starters.length > 0 ||
+    lineups.home.substitutes.length > 0 ||
+    lineups.away.starters.length > 0 ||
+    lineups.away.substitutes.length > 0;
   const homeName = fixture?.home?.name ?? "Home Team";
   const awayName = fixture?.away?.name ?? "Away Team";
   const homeImage = fixture?.home?.image_path ?? null;
@@ -189,7 +194,8 @@ function LineupsPanel({
             fallbackImage={homeImage}
             team={lineups.home.team}
             formation={lineups.home.formation}
-            players={lineups.home.players}
+            starters={lineups.home.starters}
+            substitutes={lineups.home.substitutes}
           />
           <LineupColumn
             side="away"
@@ -197,7 +203,8 @@ function LineupsPanel({
             fallbackImage={awayImage}
             team={lineups.away.team}
             formation={lineups.away.formation}
-            players={lineups.away.players}
+            starters={lineups.away.starters}
+            substitutes={lineups.away.substitutes}
           />
         </>
       ) : null}
@@ -211,15 +218,19 @@ function LineupColumn({
   fallbackImage,
   team,
   formation,
-  players,
+  starters,
+  substitutes,
 }: {
   side: "home" | "away";
   fallbackName: string;
   fallbackImage: string | null;
   team: FixtureLineupTeam | null;
   formation: string | null;
-  players: FixtureLineupPlayer[];
+  starters: FixtureLineupPlayer[];
+  substitutes: FixtureLineupPlayer[];
 }) {
+  const hasPlayers = starters.length > 0 || substitutes.length > 0;
+
   return (
     <Card
       className={`overflow-hidden border-zinc-800/80 bg-zinc-900/70 ${
@@ -246,10 +257,21 @@ function LineupColumn({
       </div>
 
       <div className="divide-y divide-zinc-800">
-        {players.length ? (
-          players.map((player) => (
-            <LineupPlayerRow key={`${side}-${player.id}-${player.player_id}`} player={player} />
-          ))
+        {hasPlayers ? (
+          <>
+            <LineupSection
+              side={side}
+              title="Starting XI"
+              players={starters}
+              emptyMessage="No starting lineup data is available for this team yet."
+            />
+            <LineupSection
+              side={side}
+              title="Substitutes"
+              players={substitutes}
+              emptyMessage="No substitutes data is available for this team yet."
+            />
+          </>
         ) : (
           <div className="px-5 py-8 text-sm text-zinc-500">
             No lineup data is available for this team yet.
@@ -257,6 +279,41 @@ function LineupColumn({
         )}
       </div>
     </Card>
+  );
+}
+
+function LineupSection({
+  side,
+  title,
+  players,
+  emptyMessage,
+}: {
+  side: "home" | "away";
+  title: string;
+  players: FixtureLineupPlayer[];
+  emptyMessage: string;
+}) {
+  return (
+    <section>
+      <div className="border-b border-zinc-800/80 bg-zinc-950/40 px-5 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+          {title}
+        </p>
+      </div>
+
+      {players.length ? (
+        <div className="divide-y divide-zinc-800/80">
+          {players.map((player) => (
+            <LineupPlayerRow
+              key={`${side}-${title}-${player.id}-${player.player_id}`}
+              player={player}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="px-5 py-5 text-sm text-zinc-500">{emptyMessage}</div>
+      )}
+    </section>
   );
 }
 
@@ -334,12 +391,14 @@ type PreparedFixtureLineups = {
   home: {
     team: FixtureLineupTeam | null;
     formation: string | null;
-    players: FixtureLineupPlayer[];
+    starters: FixtureLineupPlayer[];
+    substitutes: FixtureLineupPlayer[];
   };
   away: {
     team: FixtureLineupTeam | null;
     formation: string | null;
-    players: FixtureLineupPlayer[];
+    starters: FixtureLineupPlayer[];
+    substitutes: FixtureLineupPlayer[];
   };
 };
 
@@ -347,25 +406,27 @@ function buildPreparedLineups(
   _fixture: TeamFixture,
   lineups?: FixtureLineups | null
 ): PreparedFixtureLineups {
-  const homePlayers = sortLineupPlayers(lineups?.home_lineups ?? []);
-  const awayPlayers = sortLineupPlayers(lineups?.away_lineups ?? []);
+  const homePlayers = groupLineupPlayers(lineups?.home_lineups ?? []);
+  const awayPlayers = groupLineupPlayers(lineups?.away_lineups ?? []);
 
   return {
     home: {
       team: lineups?.teams?.home ?? null,
       formation: getFormation(lineups, "home"),
-      players: homePlayers,
+      starters: homePlayers.starters,
+      substitutes: homePlayers.substitutes,
     },
     away: {
       team: lineups?.teams?.away ?? null,
       formation: getFormation(lineups, "away"),
-      players: awayPlayers,
+      starters: awayPlayers.starters,
+      substitutes: awayPlayers.substitutes,
     },
   };
 }
 
-function sortLineupPlayers(players: FixtureLineupPlayer[]) {
-  return [...players]
+function groupLineupPlayers(players: FixtureLineupPlayer[]) {
+  const sortedPlayers = [...players]
     .filter((player): player is FixtureLineupPlayer => Boolean(player))
     .sort((left, right) => {
       const leftPosition = left?.formation_position ?? Number.MAX_SAFE_INTEGER;
@@ -380,6 +441,11 @@ function sortLineupPlayers(players: FixtureLineupPlayer[]) {
 
       return leftName.localeCompare(rightName);
     });
+
+  return {
+    starters: sortedPlayers.filter((player) => player.type?.code === "lineup"),
+    substitutes: sortedPlayers.filter((player) => player.type?.code === "bench"),
+  };
 }
 
 function getFormation(
@@ -398,7 +464,13 @@ function getFormation(
 }
 
 function getLineupPositionLabel(player: FixtureLineupPlayer) {
-  return player.position_id != null
-    ? `Position ${player.position_id}`
-    : "Position unavailable";
+  if (player.position?.name) {
+    return player.position.name;
+  }
+
+  if (player.position?.code) {
+    return player.position.code.toUpperCase();
+  }
+
+  return "Position unavailable";
 }

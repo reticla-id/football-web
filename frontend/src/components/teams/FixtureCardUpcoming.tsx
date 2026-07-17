@@ -13,7 +13,7 @@ export default function FixtureCardUpcoming({ fixture }: Props) {
     <article className="border border-zinc-800/80 bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(10,10,10,0.96))] px-4 py-3 transition-colors duration-200 hover:border-zinc-600 sm:px-5">
       <div className="space-y-2.5">
         <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-          Match Week
+          Match Week {fixture.round_name}
         </p>
 
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">

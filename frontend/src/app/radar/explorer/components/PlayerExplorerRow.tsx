@@ -1,15 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Minus, Plus } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import { ArrowRight, Minus, Plus } from "lucide-react";
+
 import type { ExplorerPlayer } from "./types";
 
 export default function PlayerExplorerRow({
   player,
+  isExpanded = false,
+  onToggleExpanded,
   rowAction,
 }: {
   player: ExplorerPlayer;
+  isExpanded?: boolean;
+  onToggleExpanded?: (playerId: number) => void;
   rowAction?: {
     label: string;
     title: string;
@@ -18,19 +23,30 @@ export default function PlayerExplorerRow({
   };
 }) {
   const rowGridClassName = rowAction
-    ? "grid-cols-[minmax(0,2.4fr)_96px_120px_120px_88px_88px_52px]"
-    : "grid-cols-[minmax(0,2.4fr)_96px_120px_120px_88px_88px]";
-  const linkSpanClassName = rowAction ? "col-span-6" : "col-span-5";
+    ? "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px_52px]"
+    : "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px]";
+  const contentSpanClassName = rowAction ? "col-span-7" : "col-span-6";
+  const detailCardSpanClassName = rowAction ? "col-span-8" : "col-span-7";
+  const detailStats = [
+    { label: "Successful Passes", value: player.successful_passes },
+    { label: "Pass Accuracy %", value: formatPercentage(player.pass_accuracy) },
+    { label: "Tackles Won", value: player.tackles_won },
+    { label: "Interceptions", value: player.interceptions },
+    { label: "Saves", value: player.saves },
+  ];
 
   return (
-    <motion.div
-      whileHover={{ x: 4 }}
-      transition={{ duration: 0.18, ease: "easeOut" }}
+    <div
       className={`grid ${rowGridClassName} items-center gap-3 border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75`}
     >
-      <Link
-        href={`/players/${player.slug}`}
-        className={`${linkSpanClassName} grid grid-cols-subgrid items-center gap-3`}
+      <motion.button
+        type="button"
+        whileHover={{ x: 4 }}
+        transition={{ duration: 0.18, ease: "easeOut" }}
+        onClick={() => onToggleExpanded?.(player.player_id)}
+        className={`${contentSpanClassName} grid grid-cols-subgrid items-center gap-3 text-left`}
+        aria-expanded={isExpanded}
+        aria-controls={`radar-player-panel-${player.player_id}`}
       >
         <div className="flex min-w-0 items-center gap-3">
           <img
@@ -46,22 +62,24 @@ export default function PlayerExplorerRow({
             </p>
           </div>
 
-          <div className="ml-auto flex min-w-0 items-center gap-2">
+          <div className="ml-auto flex justify-end">
             <img
               src={player.team_image_path ?? "/placeholder-club.png"}
               alt={player.clubName}
               className="h-7 w-7 shrink-0 object-contain"
             />
-            <span className="truncate text-sm text-zinc-400">{player.clubName}</span>
           </div>
         </div>
 
         <div className="text-sm text-zinc-300">{player.age ?? "-"}</div>
+        <div className="text-sm text-zinc-300">
+          {player.heightValue != null ? `${player.heightValue} cm` : "-"}
+        </div>
         <div className="text-sm text-zinc-300">{player.prefer_foot ?? "-"}</div>
         <div className="text-sm text-zinc-300">{player.appearances ?? "-"}</div>
         <div className="text-sm font-medium text-white">{player.goals}</div>
         <div className="text-sm font-medium text-white">{player.assists}</div>
-      </Link>
+      </motion.button>
 
       <div className="flex justify-end">
         {rowAction ? (
@@ -77,7 +95,10 @@ export default function PlayerExplorerRow({
             }
             title={rowAction.title}
             aria-label={`${rowAction.label} ${player.display_name}`}
-            onClick={() => rowAction.onClick(player)}
+            onClick={(event) => {
+              event.stopPropagation();
+              rowAction.onClick(player);
+            }}
           >
             {rowAction.tone === "danger" ? (
               <Minus className="h-4 w-4" />
@@ -87,6 +108,49 @@ export default function PlayerExplorerRow({
           </motion.button>
         ) : null}
       </div>
-    </motion.div>
+
+      <AnimatePresence initial={false}>
+        {isExpanded ? (
+          <motion.div
+            id={`radar-player-panel-${player.player_id}`}
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: "easeOut" }}
+            className={`${detailCardSpanClassName} overflow-hidden`}
+          >
+            <div className="border border-zinc-800 bg-zinc-950/70 px-4 py-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                {detailStats.map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="px-3 py-3"
+                  >
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                      {stat.label}
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-white">{stat.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              <div className="mt-4 flex justify-end">
+                <Link
+                  href={`/players/${player.slug}`}
+                  className="accent-text inline-flex items-center gap-2 text-sm font-medium transition hover:text-white"
+                >
+                  View Player
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
+    </div>
   );
+}
+
+function formatPercentage(value: number | null) {
+  return value != null ? `${value}%` : "-";
 }

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { getPlayersSummary } from "@/lib/supabase/queries";
+import { buildPlayerSlug } from "@/lib/player-utils";
 import type { PlayerSummary } from "@/types/player";
 
 const ITEMS_PER_PAGE = 25;
@@ -97,11 +98,10 @@ export default function PlayersPage() {
     [players]
   );
 
-  useEffect(() => {
-    if (!clubs.includes(clubFilter)) {
-      setClubFilter("All");
-    }
-  }, [clubFilter, clubs]);
+  const effectiveClubFilter = useMemo(
+    () => (clubs.includes(clubFilter) ? clubFilter : "All"),
+    [clubFilter, clubs]
+  );
 
   const filteredPlayers = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -118,12 +118,13 @@ export default function PlayersPage() {
         (player.nationality ?? "").toLowerCase().includes(keyword);
 
       const matchesLeague = leagueFilter === "All" || player.league_name === leagueFilter;
-      const matchesClub = clubFilter === "All" || player.team_name === clubFilter;
+      const matchesClub =
+        effectiveClubFilter === "All" || player.team_name === effectiveClubFilter;
       const matchesPosition = positionFilter === "All" || position === positionFilter;
 
       return matchesSearch && matchesLeague && matchesClub && matchesPosition;
     });
-  }, [players, search, leagueFilter, clubFilter, positionFilter]);
+  }, [players, search, leagueFilter, effectiveClubFilter, positionFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -135,8 +136,7 @@ export default function PlayersPage() {
     () =>
       paginatedPlayers.map((player) => ({
         ...player,
-        slug: slugify(player.display_name),
-        age: getAgeFromDateOfBirth(player.date_of_birth),
+        slug: buildPlayerSlug(player.display_name),
         position:
           player.detailed_position_name?.trim() ?? player.position_name?.trim() ?? null,
       })),
@@ -192,7 +192,7 @@ export default function PlayersPage() {
             </Select>
 
             <Select
-              value={clubFilter}
+              value={effectiveClubFilter}
               onValueChange={(value) => {
                 setClubFilter(value);
                 setCurrentPage(1);
@@ -266,10 +266,6 @@ export default function PlayersPage() {
                       <span className="truncate text-sm text-zinc-400">
                         {player.team_name ?? "Club unavailable"}
                       </span>
-
-                      <span className="text-sm text-zinc-300">
-                        {player.age ? `${player.age} y/o` : "-"}
-                      </span>
                     </div>
 
                     <p className="mt-1 text-xs uppercase tracking-wider text-zinc-500">
@@ -283,7 +279,7 @@ export default function PlayersPage() {
                   <img
                     src={player.team_image_path ?? "/placeholder-club.png"}
                     alt={player.team_name ?? "Club crest"}
-                    className="h-8 w-8 object-contain"
+                    className="h-10 w-10 object-contain"
                   />
                 </CardContent>
               </Card>
@@ -333,38 +329,6 @@ export default function PlayersPage() {
       </div>
     </div>
   );
-}
-
-function getAgeFromDateOfBirth(dateOfBirth: string | null) {
-  if (!dateOfBirth) {
-    return null;
-  }
-
-  const birthDate = new Date(dateOfBirth);
-  if (Number.isNaN(birthDate.getTime())) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age -= 1;
-  }
-
-  return age;
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }
 
 function LabeledSelectValue({

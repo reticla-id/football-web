@@ -92,6 +92,7 @@ export default function ShortlistClient() {
   const [playerToRemove, setPlayerToRemove] = useState<ExplorerPlayer | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedPlayerId, setExpandedPlayerId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadShortlist = async () => {
@@ -192,10 +193,6 @@ export default function ShortlistClient() {
   );
 
   useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCollectionId]);
-
-  useEffect(() => {
     writeStoredState(SHORTLIST_STORAGE_KEY, {
       selectedCollectionId,
       currentPage,
@@ -219,6 +216,10 @@ export default function ShortlistClient() {
 
       return { column, direction: "asc" };
     });
+  };
+
+  const handleToggleExpandedPlayer = (playerId: number) => {
+    setExpandedPlayerId((current) => (current === playerId ? null : playerId));
   };
 
   useEffect(() => {
@@ -397,7 +398,10 @@ export default function ShortlistClient() {
           <div className="w-full sm:max-w-[320px]">
             <Select
               value={selectedCollectionId}
-              onValueChange={setSelectedCollectionId}
+              onValueChange={(value) => {
+                setSelectedCollectionId(value);
+                setCurrentPage(1);
+              }}
               disabled={!collections.length}
             >
               <SelectTrigger>
@@ -451,6 +455,8 @@ export default function ShortlistClient() {
               isLoading={isLoading}
               sortState={sortState}
               onSortChange={handleSortChange}
+              expandedPlayerId={expandedPlayerId}
+              onToggleExpandedPlayer={handleToggleExpandedPlayer}
               rowAction={
                 selectedCollection
                   ? {
@@ -556,6 +562,7 @@ function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
     ...player,
     slug: slugify(player.display_name),
     age: getAgeFromDateOfBirth(player.date_of_birth),
+    heightValue: player.height ?? null,
     appearances: null,
     positionLabel: player.position_name?.trim() || "Profile unavailable",
     clubName: player.team_name?.trim() || "Club unavailable",
@@ -567,6 +574,7 @@ function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
     passAccuracyValue,
     tacklesPer90: 0,
     interceptionsPer90: 0,
+    savesPer90: 0,
     traits: ["Unclassified"],
     playstyles: ["General Profile"],
   };

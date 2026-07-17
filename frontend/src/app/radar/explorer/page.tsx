@@ -50,6 +50,7 @@ type FiltersState = {
   minimumPassAccuracy: number;
   minimumTacklesPer90: number;
   minimumInterceptionsPer90: number;
+  minimumSavesPer90: number;
   traits: string[];
   playstyles: string[];
 };
@@ -71,44 +72,32 @@ const defaultFilters: FiltersState = {
   minimumPassAccuracy: 0,
   minimumTacklesPer90: 0,
   minimumInterceptionsPer90: 0,
+  minimumSavesPer90: 0,
   traits: [],
   playstyles: [],
 };
 
 export default function RadarExplorerPage() {
+  const storedExplorerState = readStoredState(EXPLORER_STORAGE_KEY, {
+    filters: defaultFilters,
+    currentPage: 1,
+    sortState: {
+      column: null,
+      direction: null,
+    } satisfies ExplorerSortState,
+  });
   const [players, setPlayers] = useState<ExplorerPlayer[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
   const [collections, setCollections] = useState<ShortlistCollection[]>([]);
   const [shortlistLinks, setShortlistLinks] = useState<ShortlistPlayer[]>([]);
   const [filters, setFilters] = useState<FiltersState>(() =>
-    readStoredState(EXPLORER_STORAGE_KEY, {
-      filters: defaultFilters,
-      currentPage: 1,
-      sortState: {
-        column: null,
-        direction: null,
-      } satisfies ExplorerSortState,
-    }).filters
+    ({
+      ...defaultFilters,
+      ...storedExplorerState.filters,
+    })
   );
-  const [currentPage, setCurrentPage] = useState(() =>
-    readStoredState(EXPLORER_STORAGE_KEY, {
-      filters: defaultFilters,
-      currentPage: 1,
-      sortState: {
-        column: null,
-        direction: null,
-      } satisfies ExplorerSortState,
-    }).currentPage
-  );
-  const [sortState, setSortState] = useState<ExplorerSortState>(() =>
-    readStoredState(EXPLORER_STORAGE_KEY, {
-      filters: defaultFilters,
-      currentPage: 1,
-      sortState: {
-        column: null,
-        direction: null,
-      } satisfies ExplorerSortState,
-    }).sortState
+  const [currentPage, setCurrentPage] = useState(() => storedExplorerState.currentPage);
+  const [sortState, setSortState] = useState<ExplorerSortState>(
+    () => storedExplorerState.sortState
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -116,6 +105,7 @@ export default function RadarExplorerPage() {
   const [selectedPlayer, setSelectedPlayer] = useState<ExplorerPlayer | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [expandedPlayerId, setExpandedPlayerId] = useState<number | null>(null);
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -136,8 +126,6 @@ export default function RadarExplorerPage() {
       setPlayers((result.data ?? []).map(normalizeExplorerPlayer));
 
       if (userResult.data?.id) {
-        setUserId(userResult.data.id);
-
         const shortlistResult = await loadUserShortlistData(userResult.data.id);
 
         if (shortlistResult.error) {
@@ -236,20 +224,10 @@ export default function RadarExplorerPage() {
       players
         .filter(
           (player) => player.country && filters.country.includes(player.country)
-        )
-        .map((player) => player.league)
+      )
+      .map((player) => player.league)
     );
   }, [availableLeagues, filters.country, players]);
-
-  useEffect(() => {
-    const filteredLeagueValues = filters.league.filter((value) =>
-      leagueOptions.includes(value)
-    );
-
-    if (filteredLeagueValues.length !== filters.league.length) {
-      setFilters((current) => ({ ...current, league: filteredLeagueValues }));
-    }
-  }, [filters.league, leagueOptions]);
 
   const filteredPlayers = useMemo(() => {
     const keyword = filters.search.trim().toLowerCase();
@@ -293,6 +271,7 @@ export default function RadarExplorerPage() {
       const matchesTackles = player.tacklesPer90 >= filters.minimumTacklesPer90;
       const matchesInterceptions =
         player.interceptionsPer90 >= filters.minimumInterceptionsPer90;
+      const matchesSaves = player.savesPer90 >= filters.minimumSavesPer90;
       const matchesTraits =
         filters.traits.length === 0 ||
         filters.traits.every((trait) => player.traits.includes(trait));
@@ -315,6 +294,7 @@ export default function RadarExplorerPage() {
         matchesPassAccuracy &&
         matchesTackles &&
         matchesInterceptions &&
+        matchesSaves &&
         matchesTraits &&
         matchesPlaystyles
       );
@@ -387,6 +367,24 @@ export default function RadarExplorerPage() {
     });
   };
 
+  const handleToggleExpandedPlayer = (playerId: number) => {
+    setExpandedPlayerId((current) => (current === playerId ? null : playerId));
+  };
+
+  const handleFiltersChange = (nextFilters: FiltersState) => {
+    const nextLeagueOptions = getLeagueOptionsForCountries(
+      players,
+      availableLeagues,
+      nextFilters.country
+    );
+
+    setFilters({
+      ...nextFilters,
+      league: nextFilters.league.filter((value) => nextLeagueOptions.includes(value)),
+    });
+    setCurrentPage(1);
+  };
+
   const handleAddPlayerToCollection = async (collection: ShortlistCollection) => {
     if (!selectedPlayer) {
       return;
@@ -435,10 +433,7 @@ export default function RadarExplorerPage() {
         <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
           <RadarExplorerFilters
             filters={filters}
-            onFiltersChange={(nextFilters) => {
-              setFilters(nextFilters);
-              setCurrentPage(1);
-            }}
+            onFiltersChange={handleFiltersChange}
             minAvailableAge={minAvailableAge}
             maxAvailableAge={maxAvailableAge}
             minAvailableHeight={minAvailableHeight}
@@ -459,6 +454,8 @@ export default function RadarExplorerPage() {
               isLoading={isLoading}
               sortState={sortState}
               onSortChange={handleSortChange}
+              expandedPlayerId={expandedPlayerId}
+              onToggleExpandedPlayer={handleToggleExpandedPlayer}
               rowAction={{
                 label: "",
                 title: "Add to Shortlist",
@@ -527,6 +524,8 @@ function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
     appearances && appearances > 0
       ? Number((player.interceptions / appearances).toFixed(1))
       : 0;
+  const savesPer90 =
+    appearances && appearances > 0 ? Number((player.saves / appearances).toFixed(1)) : 0;
   const traits = buildTraits(player);
   const playstyles = buildPlaystyles(player);
 
@@ -534,6 +533,7 @@ function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
     ...player,
     slug: slugify(player.display_name),
     age,
+    heightValue: player.height ?? null,
     appearances,
     positionLabel: player.detailed_position_name?.trim() || "Profile unavailable",
     clubName: player.team_name?.trim() || "Club unavailable",
@@ -545,6 +545,7 @@ function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
     passAccuracyValue,
     tacklesPer90,
     interceptionsPer90,
+    savesPer90,
     traits,
     playstyles,
   };
@@ -622,6 +623,24 @@ function getUniqueValues(values: Array<string | null | undefined>) {
   return Array.from(
     new Set(values.filter((value): value is string => Boolean(value?.trim())))
   ).sort((left, right) => left.localeCompare(right));
+}
+
+function getLeagueOptionsForCountries(
+  players: ExplorerPlayer[],
+  availableLeagues: string[],
+  selectedCountries: string[]
+) {
+  if (selectedCountries.length === 0) {
+    return availableLeagues;
+  }
+
+  return getUniqueValues(
+    players
+      .filter(
+        (player) => player.country && selectedCountries.includes(player.country)
+      )
+      .map((player) => player.league)
+  );
 }
 
 function slugify(value: string) {

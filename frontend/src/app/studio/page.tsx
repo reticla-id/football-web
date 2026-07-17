@@ -1,36 +1,29 @@
 "use client";
 
 import Link from "next/link";
-import { Dna, Compass, DatabaseSearch } from "lucide-react";
+import { ScanEye, FilePenLine } from "lucide-react";
 import { motion } from "framer-motion";
 
 import { Card, CardContent } from "@/components/ui/card";
 
-const radarModes = [
+const studioModes = [
   {
-    href: "/radar/dna",
-    title: "DNA",
+    href: "/studio/visio",
+    title: "Visio",
     description:
-      "Analyze a player using advanced attribute DNA, strength profile, role fit, and similarity model.",
-    Icon: Dna,
+      "Intelligent football video analysis powered by AI and computer vision",
+    Icon: ScanEye,
   },
   {
-    href: "/radar/explorer",
-    title: "Explorer",
+    href: "/studio/canvas",
+    title: "Canvas",
     description:
-      "Discover players through advanced filtering, comparison tools, and interactive scouting.",
-    Icon: Compass,
-  },
-  {
-    href: "/radar/shortlist",
-    title: "Shortlist",
-    description:
-      "Track, organize, and monitor shortlisted players across multiple scouting collections.",
-    Icon: DatabaseSearch,
+      "Create professional tactical visuals using built-in football templates and overlays.",
+    Icon: FilePenLine,
   },
 ] as const;
 
-export default function RadarPage() {
+export default function StudioPage() {
   return (
     <div className="flex min-h-[calc(100vh-2.5rem)] items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
       <motion.div
@@ -41,15 +34,15 @@ export default function RadarPage() {
       >
         <div className="space-y-3 text-center">
           <p className="accent-text text-xs font-semibold uppercase tracking-[0.34em]">
-            Radar Lab
+            Studio Lab
           </p>
           <h1 className="font-display text-[3rem] leading-[0.92] text-white sm:text-[4rem]">
-            Choose Radar Mode
+            Choose Studio Mode
           </h1>
         </div>
 
-        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {radarModes.map((mode, index) => {
+        <div className="mx-auto grid max-w-6xl gap-6 md:grid-cols-2">
+          {studioModes.map((mode, index) => {
             const Icon = mode.Icon;
 
             return (

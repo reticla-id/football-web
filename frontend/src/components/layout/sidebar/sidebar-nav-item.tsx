@@ -21,7 +21,7 @@ const badgeStyles: Record<string, string> = {
 export function SidebarNavItem({ item, collapsed }: SidebarNavItemProps) {
   const pathname = usePathname();
   const radarAliasMatch =
-    item.href === "/labs/radar" &&
+    item.href === "/radar" &&
     (pathname.startsWith("/radar") || pathname.startsWith("/labs/radar"));
   const active = radarAliasMatch
     ? true

@@ -5,9 +5,9 @@ import {
   ArrowRight,
   BarChart3,
   CalendarDays,
+  Shield,
   Sparkles,
-  Trophy,
-  Users,
+  Goal
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -16,8 +16,18 @@ import FixtureCard from "@/components/dashboard/FixtureCard";
 import { LeaderboardTable } from "@/components/dashboard/LeaderboardTable";
 import { StandingsTable } from "@/components/dashboard/StandingsTable";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { readStoredState, writeStoredState } from "@/app/radar/components/storage";
 import { getDashboardData, getFixtures } from "@/lib/supabase/queries";
 import type { DashboardStats, Fixture } from "@/lib/supabase/types";
+
+const HOME_FILTER_STORAGE_KEY = "dashboard-home-filters";
 
 function StatSkeleton() {
   return (
@@ -33,6 +43,20 @@ export default function HomeClient() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [fixtures, setFixtures] = useState<Fixture[]>([]);
+  const [selectedLeague, setSelectedLeague] = useState(
+    () =>
+      readStoredState<{ league: string; season: string }>(HOME_FILTER_STORAGE_KEY, {
+        league: "",
+        season: "",
+      }).league
+  );
+  const [selectedSeason, setSelectedSeason] = useState(
+    () =>
+      readStoredState<{ league: string; season: string }>(HOME_FILTER_STORAGE_KEY, {
+        league: "",
+        season: "",
+      }).season
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -58,31 +82,165 @@ export default function HomeClient() {
     void loadData();
   }, []);
 
+  const filterSource = useMemo(
+    () => [
+      ...(dashboardData?.standings ?? []),
+      ...(dashboardData?.topScorers ?? []),
+      ...(dashboardData?.topAssists ?? []),
+      ...(dashboardData?.topRedcards ?? []),
+    ],
+    [dashboardData]
+  );
+
+  const leagueOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          filterSource
+            .map((row) => row.league)
+            .filter((value): value is string => Boolean(value))
+        )
+      ).sort(compareValuesAsc),
+    [filterSource]
+  );
+
+  const seasonsByLeague = useMemo(() => {
+    const leagueMap = new Map<string, string[]>();
+
+    for (const row of filterSource) {
+      if (!row.league || !row.season) {
+        continue;
+      }
+
+      const currentSeasons = leagueMap.get(row.league) ?? [];
+      if (!currentSeasons.includes(row.season)) {
+        currentSeasons.push(row.season);
+      }
+      leagueMap.set(row.league, currentSeasons);
+    }
+
+    for (const [league, seasons] of leagueMap) {
+      leagueMap.set(league, seasons.sort(compareValuesDesc));
+    }
+
+    return leagueMap;
+  }, [filterSource]);
+
+  const defaultLeague = useMemo(() => {
+    const leagues = Array.from(seasonsByLeague.keys());
+
+    return leagues.sort((leftLeague, rightLeague) => {
+      const leftLatestSeason = seasonsByLeague.get(leftLeague)?.[0] ?? "";
+      const rightLatestSeason = seasonsByLeague.get(rightLeague)?.[0] ?? "";
+      const seasonComparison = compareValuesDesc(leftLatestSeason, rightLatestSeason);
+
+      if (seasonComparison !== 0) {
+        return seasonComparison;
+      }
+
+      return compareValuesAsc(leftLeague, rightLeague);
+    })[0] ?? "";
+  }, [seasonsByLeague]);
+
+  const effectiveLeague = useMemo(
+    () => (leagueOptions.includes(selectedLeague) ? selectedLeague : defaultLeague),
+    [defaultLeague, leagueOptions, selectedLeague]
+  );
+
+  const seasonOptions = useMemo(
+    () => seasonsByLeague.get(effectiveLeague) ?? [],
+    [effectiveLeague, seasonsByLeague]
+  );
+
+  const effectiveSeason = useMemo(
+    () => (seasonOptions.includes(selectedSeason) ? selectedSeason : (seasonOptions[0] ?? "")),
+    [seasonOptions, selectedSeason]
+  );
+
+  useEffect(() => {
+    writeStoredState(HOME_FILTER_STORAGE_KEY, {
+      league: effectiveLeague,
+      season: effectiveSeason,
+    });
+  }, [effectiveLeague, effectiveSeason]);
+
+  const filteredStandings = useMemo(
+    () =>
+      (dashboardData?.standings ?? []).filter(
+        (row) =>
+          row.league === effectiveLeague && row.season === effectiveSeason
+      ),
+    [dashboardData, effectiveLeague, effectiveSeason]
+  );
+
+  const filteredTopScorers = useMemo(
+    () =>
+      (dashboardData?.topScorers ?? []).filter(
+        (row) =>
+          row.league === effectiveLeague && row.season === effectiveSeason
+      ),
+    [dashboardData, effectiveLeague, effectiveSeason]
+  );
+
+  const filteredTopAssists = useMemo(
+    () =>
+      (dashboardData?.topAssists ?? []).filter(
+        (row) =>
+          row.league === effectiveLeague && row.season === effectiveSeason
+      ),
+    [dashboardData, effectiveLeague, effectiveSeason]
+  );
+
+  const filteredTopRedcards = useMemo(
+    () =>
+      (dashboardData?.topRedcards ?? []).filter(
+        (row) =>
+          row.league === effectiveLeague && row.season === effectiveSeason
+      ),
+    [dashboardData, effectiveLeague, effectiveSeason]
+  );
+
+  const filteredLeagueStats = useMemo(() => {
+    const totalTeams = filteredStandings.length;
+    const totalMatches =
+      filteredStandings.reduce((sum, row) => sum + row.played, 0) / 2;
+    const totalGoals = filteredStandings.reduce(
+      (sum, row) => sum + (row.goalsFor ?? 0),
+      0
+    );
+
+    return {
+      totalTeams,
+      totalMatches,
+      avgGoals: totalMatches > 0 ? totalGoals / totalMatches : 0,
+    };
+  }, [filteredStandings]);
+
   const summaryStats = useMemo(
     () => [
       {
         label: "Teams",
         value: dashboardData?.leagueStats.totalTeams ?? 0,
-        icon: Users,
-        description: "Clubs tracked",
-      },
-      {
-        label: "Players",
-        value: dashboardData?.topScorers.length ?? 0,
-        icon: Trophy,
-        description: "Scorers listed",
+        icon: Shield,
+        description: "Participating clubs",
       },
       {
         label: "Fixtures",
-        value: dashboardData?.recentFixtures.length ?? 0,
+        value: dashboardData?.topScorers.length ?? 0,
         icon: CalendarDays,
-        description: "Recent results",
+        description: "Matches played",
       },
       {
-        label: "Matches",
+        label: "Goals",
+        value: dashboardData?.recentFixtures.length ?? 0,
+        icon: Goal,
+        description: "Goals scored",
+      },
+      {
+        label: "Avg Goals / Match",
         value: dashboardData?.leagueStats.totalMatches ?? 0,
         icon: BarChart3,
-        description: "Season snapshots",
+        description: "Goals per Match",
       },
     ],
     [dashboardData]
@@ -90,7 +248,7 @@ export default function HomeClient() {
 
   const topScorersRows = useMemo(
     () =>
-      (dashboardData?.topScorers ?? []).map((player, index) => ({
+      filteredTopScorers.slice(0, 10).map((player, index) => ({
         rank: index + 1,
         name: player.player,
         team: player.team,
@@ -99,12 +257,12 @@ export default function HomeClient() {
         value: player.goals,
         label: "Goals",
       })),
-    [dashboardData]
+    [filteredTopScorers]
   );
 
   const topAssistsRows = useMemo(
     () =>
-      (dashboardData?.topAssists ?? []).map((player, index) => ({
+      filteredTopAssists.slice(0, 10).map((player, index) => ({
         rank: index + 1,
         name: player.player,
         team: player.team,
@@ -113,7 +271,21 @@ export default function HomeClient() {
         value: player.assists,
         label: "Assists",
       })),
-    [dashboardData]
+    [filteredTopAssists]
+  );
+
+  const topRedcardsRows = useMemo(
+    () =>
+      filteredTopRedcards.slice(0, 10).map((player, index) => ({
+        rank: index + 1,
+        name: player.player,
+        team: player.team,
+        image_path: player.image_path,
+        team_image_path: player.team_image_path,
+        value: player.redcards,
+        label: "Red Cards",
+      })),
+    [filteredTopRedcards]
   );
 
   const recentFixtures = useMemo(() => fixtures.slice(0, 5), [fixtures]);
@@ -144,14 +316,75 @@ export default function HomeClient() {
                 and match intelligence with the discipline of an elite football department.
               </p>
             </div>
+
+            <div className="app-shell-panel flex flex-col gap-4 p-4 lg:flex-row lg:items-end lg:justify-between">
+              <div>
+                <p className="text-[11px] uppercase tracking-[0.24em] text-zinc-500">
+                  Dashboard Filters
+                </p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Narrow standings and league leaderboards by competition and season.
+                </p>
+              </div>
+
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <div className="w-full sm:w-[220px]">
+                  <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                    League
+                  </p>
+                  <Select
+                    value={effectiveLeague}
+                    onValueChange={(value) => {
+                      setSelectedLeague(value);
+                      setSelectedSeason(seasonsByLeague.get(value)?.[0] ?? "");
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="League" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {leagueOptions.map((league) => (
+                        <SelectItem key={league} value={league}>
+                          {league}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="w-full sm:w-[220px]">
+                  <p className="mb-2 text-[11px] uppercase tracking-[0.18em] text-zinc-500">
+                    Season
+                  </p>
+                  <Select value={effectiveSeason} onValueChange={setSelectedSeason}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Season" />
+                    </SelectTrigger>
+
+                    <SelectContent>
+                      {seasonOptions.map((season) => (
+                        <SelectItem key={season} value={season}>
+                          {season}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
           </section>
 
           <section className="space-y-8">
             <div className="flex items-center justify-between">
               <h2 className="text-[1.9rem] leading-none text-white">Recent Fixtures</h2>
 
-              <Link href="/fixtures" className="hover-accent-text accent-text text-sm">
-                View all
+              <Link
+                href="/fixtures"
+                className="hover-accent-text accent-text inline-flex items-center gap-1 text-sm transition-transform"
+              >
+                <span>View all</span>
+                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
             </div>
 
@@ -239,7 +472,7 @@ export default function HomeClient() {
                   </CardHeader>
 
                   <CardContent className="min-w-0 flex-1 overflow-x-auto px-4 pb-4 pt-2">
-                    <StandingsTable standings={dashboardData.standings.slice(0, 12)} />
+                    <StandingsTable standings={filteredStandings.slice(0, 12)} />
                   </CardContent>
                 </Card>
 
@@ -257,6 +490,13 @@ export default function HomeClient() {
                     rows={topAssistsRows}
                     emptyMessage="No assist leaders available yet."
                   />
+
+                  {/* <LeaderboardTable
+                    title="Top red cards"
+                    description="Disciplinary leaders in the selected campaign"
+                    rows={topRedcardsRows}
+                    emptyMessage="No red card leaders available yet."
+                  /> */}
                 </div>
               </section>
 
@@ -270,19 +510,19 @@ export default function HomeClient() {
                     <div className="flex items-center justify-between -2xl border border-zinc-800 bg-zinc-950/65 px-4 py-3">
                       <span>Total teams</span>
                       <span className="font-semibold text-white">
-                        {dashboardData.leagueStats.totalTeams}
+                        {filteredLeagueStats.totalTeams}
                       </span>
                     </div>
                     <div className="flex items-center justify-between -2xl border border-zinc-800 bg-zinc-950/65 px-4 py-3">
                       <span>Total matches</span>
                       <span className="font-semibold text-white">
-                        {dashboardData.leagueStats.totalMatches}
+                        {filteredLeagueStats.totalMatches}
                       </span>
                     </div>
                     <div className="flex items-center justify-between -2xl border border-zinc-800 bg-zinc-950/65 px-4 py-3">
                       <span>Average goals</span>
                       <span className="font-semibold text-white">
-                        {dashboardData.leagueStats.avgGoals.toFixed(1)}
+                        {filteredLeagueStats.avgGoals.toFixed(1)}
                       </span>
                     </div>
                   </CardContent>
@@ -290,7 +530,7 @@ export default function HomeClient() {
 
                 <Card className="lg:col-span-2">
                   <CardHeader>
-                    <CardTitle>What&apos;s next</CardTitle>
+                    <CardTitle>Quick Actions</CardTitle>
                   </CardHeader>
 
                   <CardContent className="flex flex-col gap-3 text-sm text-zinc-300 sm:flex-row sm:items-center sm:justify-between">
@@ -306,6 +546,40 @@ export default function HomeClient() {
                       className="hover-accent-text accent-text inline-flex items-center gap-2 text-sm font-medium transition"
                     >
                       Browse teams
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </CardContent>
+
+                  <CardContent className="flex flex-col gap-3 text-sm text-zinc-300 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3 -2xl border border-zinc-800 bg-zinc-950/65 px-4 py-3">
+                      <div className="accent-bg-soft accent-text -full p-2">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                      <p>Explore player profiles and career data in one place.</p>
+                    </div>
+
+                    <Link
+                      href="/teams"
+                      className="hover-accent-text accent-text inline-flex items-center gap-2 text-sm font-medium transition"
+                    >
+                      Browse players
+                      <ArrowRight className="h-4 w-4" />
+                    </Link>
+                  </CardContent>
+
+                  <CardContent className="flex flex-col gap-3 text-sm text-zinc-300 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-center gap-3 -2xl border border-zinc-800 bg-zinc-950/65 px-4 py-3">
+                      <div className="accent-bg-soft accent-text -full p-2">
+                        <ArrowRight className="h-4 w-4" />
+                      </div>
+                      <p>Access scouting intelligence to identify and evaluate transfer targets.</p>
+                    </div>
+
+                    <Link
+                      href="/radar"
+                      className="hover-accent-text accent-text inline-flex items-center gap-2 text-sm font-medium transition"
+                    >
+                      Browse Radar
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </CardContent>
@@ -329,4 +603,15 @@ function slugify(value: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+}
+
+function compareValuesAsc(a: string, b: string) {
+  return new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: "base",
+  }).compare(a, b);
+}
+
+function compareValuesDesc(a: string, b: string) {
+  return compareValuesAsc(b, a);
 }

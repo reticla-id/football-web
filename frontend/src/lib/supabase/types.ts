@@ -41,10 +41,9 @@ export interface Player {
 export interface Fixture {
 
     id:number;
-
     starting_at:string;
-
     state_id:number;
+    round_name: string;
 
     league:{
         id:number;
@@ -55,6 +54,7 @@ export interface Fixture {
     home:{
         id:number;
         name:string;
+        short_code: string;
         image_path:string;
         winner:boolean;
         goals:number;
@@ -63,6 +63,7 @@ export interface Fixture {
     away:{
         id:number;
         name:string;
+        short_code: string;
         image_path:string;
         winner:boolean;
         goals:number;
@@ -89,9 +90,16 @@ export interface FixtureSeasonOption {
   name: string;
 }
 
+export interface FixtureRoundOption{
+  round_id: number;
+  round_name: number;
+}
+
 export interface StandingRow {
   position: number;
   team: string;
+  leagueId?: number;
+  seasonId?: number;
   played: number;
   win: number;
   draw: number;
@@ -103,13 +111,14 @@ export interface StandingRow {
   image_path: string;
   form?: string;
   league?: string;
+  season?: string;
 }
 
 export interface DashboardStats {
   standings: StandingRow[];
-  topScorers: Array<{ player: string; team: string; goals: number; image_path: string, team_image_path: string }>;
-  topAssists: Array<{ player: string; team: string; assists: number; image_path: string, team_image_path: string }>;
-  topRedcards: Array<{ player: string; team: string; redcards: number; image_path: string, team_image_path: string }>;
+  topScorers: Array<{ player: string; position?: string; team: string; goals: number; image_path: string, team_image_path: string; season?: string; league?: string; }>;
+  topAssists: Array<{ player: string; position?: string; team: string; assists: number; image_path: string, team_image_path: string; season?: string; league?: string;  }>;
+  topRedcards: Array<{ player: string; position?: string; team: string; redcards: number; image_path: string, team_image_path: string; season?: string; league?: string;  }>;
   recentFixtures: Fixture[];
   upcomingFixtures: Fixture[];
   leagueStats: {
@@ -139,4 +148,49 @@ export interface ShortlistPlayer {
   shortlist_id: number;
   player_id: number;
   created_at: string;
+}
+
+export interface ClubSeasonSummary {
+  season_id: number;
+  season_name: string;
+
+  league_id: number;
+  league_name: string;
+
+  team_id: number;
+  team_name: string;
+  team_image_path: string | null;
+
+  played: number;
+
+  possession_avg: number | null;
+
+  passes: number | null;
+  passes_per_game: number | null;
+  successful_passes: number | null;
+  successful_passes_per_game: number | null;
+  pass_accuracy: number | null;
+
+  shots: number | null;
+  shots_per_game: number | null;
+  shots_on_target: number | null;
+  shots_on_target_per_game: number | null;
+
+  corners: number | null;
+  corners_per_game: number | null;
+
+  fouls: number | null;
+  fouls_per_game: number | null;
+
+  offsides: number | null;
+  offsides_per_game: number | null;
+
+  saves: number | null;
+  saves_per_game: number | null;
+
+  yellow_cards: number | null;
+  yellow_cards_per_game: number | null;
+
+  red_cards: number | null;
+  red_cards_per_game: number | null;
 }

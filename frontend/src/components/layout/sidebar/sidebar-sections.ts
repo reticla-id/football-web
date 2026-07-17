@@ -50,25 +50,25 @@ export const SECTIONS: SidebarSection[] = [
     title: "Labs",
     items: [
       {
-        href: "/labs/radar",
+        href: "/radar",
         label: "Radar",
         icon: Radar,
         badge: "New",
       },
       {
-        href: "/labs/match-up",
+        href: "/match-up",
         label: "Match Up",
         icon: Swords,
         badge: "Soon",
       },
       {
-        href: "/labs/simulation",
+        href: "/simulation",
         label: "Simulation",
         icon: BrainCircuit,
         badge: "Soon",
       },
       {
-        href: "/labs/studio",
+        href: "/studio",
         label: "Studio",
         icon: Palette,
         badge: "Soon",

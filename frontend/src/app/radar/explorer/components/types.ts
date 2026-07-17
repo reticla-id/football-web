@@ -3,6 +3,7 @@ import type { PlayerSummary } from "@/types/player";
 export type ExplorerPlayer = PlayerSummary & {
   slug: string;
   age: number | null;
+  heightValue: number | null;
   appearances: number | null;
   positionLabel: string;
   clubName: string;
@@ -14,6 +15,7 @@ export type ExplorerPlayer = PlayerSummary & {
   passAccuracyValue: number;
   tacklesPer90: number;
   interceptionsPer90: number;
+  savesPer90: number;
   traits: string[];
   playstyles: string[];
 };
@@ -21,6 +23,7 @@ export type ExplorerPlayer = PlayerSummary & {
 export type ExplorerSortColumn =
   | "display_name"
   | "age"
+  | "height"
   | "prefer_foot"
   | "appearances"
   | "goals"

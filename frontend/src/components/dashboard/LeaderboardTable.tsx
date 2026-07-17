@@ -1,6 +1,8 @@
 import Link from "next/link";
 import type { ComponentPropsWithoutRef } from "react";
 
+import { buildPlayerSlug } from "@/lib/player-utils";
+
 interface LeaderboardRow {
   rank: number;
   name: string;
@@ -41,7 +43,7 @@ export function LeaderboardTable({
           {rows.map((row) => (
             <Link
               key={`${row.rank}-${row.name}`}
-              href={`/players/${slugify(row.name)}`}
+              href={`/players/${buildPlayerSlug(row.name)}`}
               className="flex items-center justify-between border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75 last:border-none"
             >
               <div className="flex min-w-0 items-center gap-2.5">
@@ -87,12 +89,4 @@ export function LeaderboardTable({
       )}
     </div>
   );
-}
-
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }

@@ -28,6 +28,7 @@ export interface TeamFixture {
   venue_name: string;
 
   round_id: number | null;
+  round_name: string | null;
   stage_id: number | null;
 
   leg: string | null;
@@ -50,10 +51,20 @@ export interface FixtureLineupPlayer {
     image_path: string | null;
   };
 
-  position_id: number | null;
+  position: {
+    id: number;
+    name: string;
+    code: string;
+  } | null;
+
+  type: {
+    id: number;
+    name: string;
+    code: string;
+  } | null;
+
   formation_position: number | null;
   jersey_number: number | null;
-  type_id: number | null;
 }
 
 export interface FixtureLineupTeam {

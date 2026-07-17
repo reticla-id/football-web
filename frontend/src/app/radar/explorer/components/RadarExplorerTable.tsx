@@ -20,6 +20,8 @@ interface Props {
   isLoading: boolean;
   sortState?: ExplorerSortState;
   onSortChange?: (column: ExplorerSortColumn) => void;
+  expandedPlayerId?: number | null;
+  onToggleExpandedPlayer?: (playerId: number) => void;
   rowAction?: {
     label: string;
     title: string;
@@ -40,17 +42,20 @@ export default function RadarExplorerTable({
   isLoading,
   sortState,
   onSortChange,
+  expandedPlayerId,
+  onToggleExpandedPlayer,
   rowAction,
   emptyState,
 }: Props) {
   const EmptyIcon = emptyState.icon;
   const hasAction = Boolean(rowAction);
   const gridClassName = hasAction
-    ? "grid-cols-[minmax(0,2.4fr)_96px_120px_120px_88px_88px_52px]"
-    : "grid-cols-[minmax(0,2.4fr)_96px_120px_120px_88px_88px]";
+    ? "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px_52px]"
+    : "grid-cols-[minmax(0,2.2fr)_90px_96px_112px_112px_88px_88px]";
   const columns: Array<{ key: ExplorerSortColumn; label: string }> = [
     { key: "display_name", label: "Player" },
     { key: "age", label: "Age" },
+    { key: "height", label: "Height" },
     { key: "prefer_foot", label: "Preferred Foot" },
     { key: "appearances", label: "Appearances" },
     { key: "goals", label: "Goals" },
@@ -118,6 +123,8 @@ export default function RadarExplorerTable({
             <PlayerExplorerRow
               key={player.player_id}
               player={player}
+              isExpanded={expandedPlayerId === player.player_id}
+              onToggleExpanded={onToggleExpandedPlayer}
               rowAction={rowAction}
             />
           ))}

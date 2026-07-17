@@ -1,19 +1,31 @@
-import { Player } from "@/types/player";
+export function buildPlayerSlug(value: string) {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
 
-const POSITION_ORDER: Record<string, number> = {
-  Goalkeeper: 1,
-  Defender: 2,
-  Midfielder: 3,
-  Attacker: 4,
-};
+export function getPlayerAge(dateOfBirth: string | null) {
+  if (!dateOfBirth) {
+    return null;
+  }
 
-export function sortPlayers(players: Player[]) {
-  return [...players].sort((a, b) => {
-    const pa = POSITION_ORDER[a.position] ?? 99;
-    const pb = POSITION_ORDER[b.position] ?? 99;
+  const birthDate = new Date(dateOfBirth);
+  if (Number.isNaN(birthDate.getTime())) {
+    return null;
+  }
 
-    if (pa !== pb) return pa - pb;
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDifference = today.getMonth() - birthDate.getMonth();
 
-    return a.display_name.localeCompare(b.display_name);
-  });
+  if (
+    monthDifference < 0 ||
+    (monthDifference === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age;
 }

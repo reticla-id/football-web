@@ -33,6 +33,8 @@ function getSortableValue(player: ExplorerPlayer, column: ExplorerSortColumn) {
       return player.display_name.toLowerCase();
     case "age":
       return player.age ?? Number.POSITIVE_INFINITY;
+    case "height":
+      return player.heightValue ?? Number.POSITIVE_INFINITY;
     case "prefer_foot":
       return (player.prefer_foot ?? "").toLowerCase();
     case "appearances":

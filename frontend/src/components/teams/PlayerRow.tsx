@@ -7,6 +7,15 @@ interface Props {
   player: SquadPlayer;
 }
 
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+}
+
+
 function PlayerRow({ player }: Props) {
   const router = useRouter();
   const minutesPlayed =
@@ -68,10 +77,3 @@ function PlayerRow({ player }: Props) {
 
 export default memo(PlayerRow);
 
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
-}

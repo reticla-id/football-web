@@ -1,6 +1,7 @@
 import { Flag, Ruler, Shirt, Shield, Timer } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import { getPlayerAge } from "@/lib/player-utils";
 import type { PlayerSummary } from "@/types/player";
 
 interface Props {
@@ -8,6 +9,8 @@ interface Props {
 }
 
 export default function PlayerHeader({ player }: Props) {
+  const currentAge = getPlayerAge(player.date_of_birth);
+
   return (
     <Card className="overflow-hidden -[28px] border-zinc-800/80 bg-[radial-gradient(circle_at_top,_color-mix(in_srgb,var(--accent)_18%,transparent),_transparent_35%),linear-gradient(180deg,rgba(24,24,27,0.96),rgba(9,9,11,0.94))]">
       <div className="grid gap-8 px-5 py-6 sm:px-8 sm:py-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 lg:px-10">
@@ -53,7 +56,7 @@ export default function PlayerHeader({ player }: Props) {
             <HeaderPill
               icon={<Timer className="accent-text h-4 w-4" />}
               label="Age"
-              value={player.date_of_birth ? String(player.date_of_birth) : "-"}
+              value={currentAge != null ? `${currentAge}` : "-"}
             />
             <HeaderPill
               icon={<Ruler className="accent-text h-4 w-4" />}

@@ -28,6 +28,7 @@ type FiltersState = {
   minimumPassAccuracy: number;
   minimumTacklesPer90: number;
   minimumInterceptionsPer90: number;
+  minimumSavesPer90: number;
   traits: string[];
   playstyles: string[];
 };
@@ -49,6 +50,7 @@ const defaultFilters: FiltersState = {
   minimumPassAccuracy: 0,
   minimumTacklesPer90: 0,
   minimumInterceptionsPer90: 0,
+  minimumSavesPer90: 0,
   traits: [],
   playstyles: [],
 };
@@ -271,6 +273,17 @@ export default function RadarExplorerFilters({
                   onFiltersChange({ ...filters, minimumInterceptionsPer90: value })
                 }
               />
+              <SliderField
+                label="Minimum Saves / 90"
+                valueLabel={filters.minimumSavesPer90.toFixed(1)}
+                min={0}
+                max={Math.max(5, Math.ceil(filters.minimumSavesPer90), 10)}
+                step={0.5}
+                value={filters.minimumSavesPer90}
+                onChange={(value) =>
+                  onFiltersChange({ ...filters, minimumSavesPer90: value })
+                }
+              />
             </FilterSection>
 
             <FilterSection title="Identity">
@@ -474,7 +487,7 @@ function SliderField({
         value={value}
         onChange={(event) => onChange(Number(event.target.value))}
         style={{ accentColor: "var(--accent)" }}
-        className="h-2 w-full cursor-pointer appearance-none bg-zinc-800 accent-[var(--accent)]"
+        className="radar-accent-slider h-2 w-full cursor-pointer appearance-none bg-zinc-800 accent-[var(--accent)]"
       />
     </div>
   );

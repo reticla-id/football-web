@@ -7,6 +7,7 @@ import type {
   FixtureClubOption,
   FixtureLeagueDirectory,
   FixtureSeasonOption,
+  ClubSeasonSummary,
   Player,
   UserProfile,
   InsertShortlistCollection,
@@ -99,6 +100,8 @@ async function fetchSupabaseData<T>(
   };
 }
 
+// Helper
+
 function normalizeUserProfile(user: User | null): UserProfile | null {
   if (!user) {
     return null;
@@ -115,6 +118,51 @@ function normalizeUserProfile(user: User | null): UserProfile | null {
     updated_at: user.updated_at ?? "",
     username: typeof metadata.username === "string" ? metadata.username : null,
   };
+}
+
+function getAgeFromDateOfBirth(dateOfBirth: unknown): number | null {
+  if (typeof dateOfBirth !== "string" || !dateOfBirth) {
+    return null;
+  }
+
+  const birthDate = new Date(dateOfBirth);
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return null;
+  }
+
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const monthDelta = today.getMonth() - birthDate.getMonth();
+
+  if (
+    monthDelta < 0 ||
+    (monthDelta === 0 && today.getDate() < birthDate.getDate())
+  ) {
+    age -= 1;
+  }
+
+  return age;
+}
+
+function buildClubFilter(clubId?: number): string | undefined {
+  if (!clubId) {
+    return undefined;
+  }
+
+  return `(home_team_id.eq.${clubId},away_team_id.eq.${clubId})`;
+}
+
+function getNestedString(
+  value: unknown,
+  key: string
+): string | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  return typeof record[key] === "string" ? record[key] : null;
 }
 
 export async function signUpWithEmail(email: string, password: string, username?: string): Promise<QueryResult<{ user: User | null; profile: UserProfile | null }>> {
@@ -217,34 +265,91 @@ export async function getCurrentUserProfile(): Promise<QueryResult<UserProfile |
   return { data: normalizeUserProfile(currentUser.data), error: null };
 }
 
+// QUERIES
+
 export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
-  const [{ data: standings, error: standingsError }, { data: topScorers, error: topScorersError }, { data: assists, error: assistsError }, { data: redCards, error: redCardsError }] = await Promise.all([
-    fetchSupabaseData<Record<string, unknown>>("standing_table", "position, points, participant, league, result, details, form", { order: "position.asc" }),
-    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.208", limit:10,  order: "total.desc" }),
-    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.209", limit:10, order: "total.desc" }),
-    fetchSupabaseData<Record<string, unknown>>("player_standing_aggs", "position, total, type_id, player, participant", { type_id: "eq.83", limit:10, order: "total.desc" }),
+  const [
+    { data: standings, error: standingsError },
+    { data: topScorers, error: topScorersError },
+    { data: assists, error: assistsError },
+    { data: redCards, error: redCardsError },
+  ] = await Promise.all([
+    fetchSupabaseData<Record<string, unknown>>(
+      "standing_table",
+      "position,points,participant,league,season,result,details,form",
+      {
+        order: "position.asc",
+      }
+    ),
+    fetchSupabaseData<Record<string, unknown>>(
+      "player_standing_aggs",
+      "position,total,type_id,season_name,league_name,player,participant",
+      {
+        type_id: "eq.208",
+        limit: 30,
+        order: "total.desc",
+      }
+    ),
+    fetchSupabaseData<Record<string, unknown>>(
+      "player_standing_aggs",
+      "position,total,type_id,season_name,league_name,player,participant",
+      {
+        type_id: "eq.209",
+        limit: 30,
+        order: "total.desc",
+      }
+    ),
+    fetchSupabaseData<Record<string, unknown>>(
+      "player_standing_aggs",
+      "position,total,type_id,season_name,league_name,player,participant",
+      {
+        type_id: "eq.83",
+        limit: 30,
+        order: "total.desc",
+      }
+    ),
   ]);
 
-  if (standingsError || topScorersError || assistsError || redCardsError) {
+  if (
+    standingsError ||
+    topScorersError ||
+    assistsError ||
+    redCardsError
+  ) {
     return {
       data: null,
-      error: [standingsError, topScorersError, assistsError, redCardsError].filter(Boolean).join("; "),
+      error: [
+        standingsError,
+        topScorersError,
+        assistsError,
+        redCardsError,
+      ]
+        .filter(Boolean)
+        .join("; "),
     };
   }
 
   const normalizedStandings = (standings ?? []).map((standing) => {
-  const participant = standing.participant as Record<string, unknown>;
-  const league = standing.league as Record<string, unknown>;
-  const details = (standing.details as Array<Record<string, unknown>>) ?? [];
-  const form = (standing.form as Array<Record<string, unknown>>) ?? [];
+    const participant = standing.participant as Record<string, unknown>;
+    const league = standing.league as Record<string, unknown>;
+    const season = standing.season as Record<string, unknown>;
+    const details =
+      (standing.details as Array<Record<string, unknown>>) ?? [];
+    const form =
+      (standing.form as Array<Record<string, unknown>>) ?? [];
 
-  const getValue = (typeId: number) =>
-    Number(details.find((d) => Number(d.type_id) === typeId)?.value ?? 0);
+    const getValue = (typeId: number) =>
+      Number(
+        details.find((detail) => Number(detail.type_id) === typeId)?.value ?? 0
+      );
 
-  return {
+    return {
       position: Number(standing.position),
-      team: String(participant?.name ?? ""),
-      league: String(league?.name ?? ""),
+      team: String(participant.name ?? ""),
+      leagueId: Number(league.id ?? 0) || undefined,
+      seasonId: Number(season.id ?? 0) || undefined,
+      league: String(league.name ?? ""),
+      season: String(season.name ?? ""),
 
       played: getValue(129),
       win: getValue(130),
@@ -257,66 +362,76 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
       result: String(standing.result),
       image_path: String(participant.image_path ?? ""),
 
-      form: form.slice(0, 5).map((f) => f.form).join("")
+      form: form
+        .slice(0, 5)
+        .map((entry) => entry.form)
+        .join(""),
     };
   });
 
-  const normalizedTopScorers = (topScorers ?? []).map((row) => {
-  const player = row.player as Record<string, unknown>;
-  const participant = row.participant as Record<string, unknown>;
-  const getValue = (
-      row: Record<string, unknown>,
-      typeId: number
-    ) => Number(row.type_id) === typeId
-      ? Number(row.total ?? 0)
-      : 0;
+  const normalizeTopScorers = (
+    rows: Record<string, unknown>[]
+  ): DashboardStats["topScorers"] =>
+    rows.map((row) => {
+      const player = row.player as Record<string, unknown>;
+      const position = player.position as Record<string, unknown> | undefined;
+      const participant = row.participant as Record<string, unknown>;
 
-  return {
-      player: String(player.name ?? ""),
-      team: String(participant.name ?? ""),
-      goals: getValue(row, 208),
-      image_path: String(player.image_path ?? ""),
-      team_image_path: String(participant.image_path ?? "")
-    };
-  });
+      return {
+        player: String(player.name ?? ""),
+        position: String(position?.name ?? ""),
+        team: String(participant.name ?? ""),
+        goals: Number(row.total ?? 0),
+        image_path: String(player.image_path ?? ""),
+        team_image_path: String(participant.image_path ?? ""),
+        season: String(row.season_name ?? ""),
+        league: String(row.league_name ?? ""),
+      };
+    });
 
-  const normalizedTopAssists = (assists ?? []).map((row) => {
-  const player = row.player as Record<string, unknown>;
-  const participant = row.participant as Record<string, unknown>;
-  const getValue = (
-      row: Record<string, unknown>,
-      typeId: number
-    ) => Number(row.type_id) === typeId
-      ? Number(row.total ?? 0)
-      : 0;
+  const normalizeTopAssists = (
+    rows: Record<string, unknown>[]
+  ): DashboardStats["topAssists"] =>
+    rows.map((row) => {
+      const player = row.player as Record<string, unknown>;
+      const position = player.position as Record<string, unknown> | undefined;
+      const participant = row.participant as Record<string, unknown>;
 
-    return {
-      player: String(player.name ?? ""),
-      team: String(participant.name ?? ""),
-      assists: getValue(row, 209),
-      image_path: String(player.image_path ?? ""),
-      team_image_path: String(participant.image_path ?? "")
-    };
-  });
+      return {
+        player: String(player.name ?? ""),
+        position: String(position?.name ?? ""),
+        team: String(participant.name ?? ""),
+        assists: Number(row.total ?? 0),
+        image_path: String(player.image_path ?? ""),
+        team_image_path: String(participant.image_path ?? ""),
+        season: String(row.season_name ?? ""),
+        league: String(row.league_name ?? ""),
+      };
+    });
 
-  const normalizedRedCards = (redCards ?? []).map((row) => {
-  const player = row.player as Record<string, unknown>;
-  const participant = row.participant as Record<string, unknown>;
-  const getValue = (
-      row: Record<string, unknown>,
-      typeId: number
-    ) => Number(row.type_id) === typeId
-      ? Number(row.total ?? 0)
-      : 0;
+  const normalizeTopRedcards = (
+    rows: Record<string, unknown>[]
+  ): DashboardStats["topRedcards"] =>
+    rows.map((row) => {
+      const player = row.player as Record<string, unknown>;
+      const position = player.position as Record<string, unknown> | undefined;
+      const participant = row.participant as Record<string, unknown>;
 
-    return {
-      player: String(player.name ?? ""),
-      team: String(participant.name ?? ""),
-      redcards: getValue(row, 83),
-      image_path: String(player.image_path ?? ""),
-      team_image_path: String(participant.image_path ?? "")
-    };
-  });
+      return {
+        player: String(player.name ?? ""),
+        position: String(position?.name ?? ""),
+        team: String(participant.name ?? ""),
+        redcards: Number(row.total ?? 0),
+        image_path: String(player.image_path ?? ""),
+        team_image_path: String(participant.image_path ?? ""),
+        season: String(row.season_name ?? ""),
+        league: String(row.league_name ?? ""),
+      };
+    });
+
+  const normalizedTopScorers = normalizeTopScorers(topScorers ?? []);
+  const normalizedTopAssists = normalizeTopAssists(assists ?? []);
+  const normalizedRedCards = normalizeTopRedcards(redCards ?? []);
 
   return {
     data: {
@@ -343,39 +458,6 @@ function slugify(value: string): string {
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
-}
-
-function getAgeFromDateOfBirth(dateOfBirth: unknown): number | null {
-  if (typeof dateOfBirth !== "string" || !dateOfBirth) {
-    return null;
-  }
-
-  const birthDate = new Date(dateOfBirth);
-
-  if (Number.isNaN(birthDate.getTime())) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDelta = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDelta < 0 ||
-    (monthDelta === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age -= 1;
-  }
-
-  return age;
-}
-
-function buildClubFilter(clubId?: number): string | undefined {
-  if (!clubId) {
-    return undefined;
-  }
-
-  return `(home_team_id.eq.${clubId},away_team_id.eq.${clubId})`;
 }
 
 async function getSeasonOptionsFromIds(
@@ -530,14 +612,14 @@ export async function getPlayers(): Promise<QueryResult<Player[]>> {
       typeof player.country === "object" &&
       player.country &&
       "name" in player.country
-        ? String((player.country as any).name ?? "")
+        ? getNestedString(player.country, "name")
         : null,
 
     position:
       typeof player.position === "object" &&
       player.position &&
       "name" in player.position
-        ? String((player.position as any).name ?? "")
+        ? getNestedString(player.position, "name")
         : null,
 
     age: getAgeFromDateOfBirth(player.date_of_birth),
@@ -553,14 +635,14 @@ export async function getPlayers(): Promise<QueryResult<Player[]>> {
       typeof player.team === "object" &&
       player.team &&
       "name" in player.team
-        ? String((player.team as any).name ?? "")
+        ? getNestedString(player.team, "name")
         : null,
 
     club_image_path:
       typeof player.team === "object" &&
       player.team &&
       "image_path" in player.team
-        ? String((player.team as any).image_path ?? "")
+        ? getNestedString(player.team, "image_path")
         : null,
 
     season: null,
@@ -569,7 +651,7 @@ export async function getPlayers(): Promise<QueryResult<Player[]>> {
       typeof player.league === "object" &&
         player.league &&
         "name" in player.league
-          ? String((player.league as any).name ?? "")
+          ? getNestedString(player.league, "name")
           : null,
 
     number:
@@ -596,6 +678,7 @@ export async function getFixtures(): Promise<QueryResult<Fixture[]>> {
       id,
       starting_at,
       state_id,
+      round_name,
       venue_name,
       league,
       home,
@@ -1095,4 +1178,19 @@ export async function deleteShortlistCollection(
     data: null,
     error: error?.message ?? null,
   };
+}
+
+export async function getClubSeasonSummary(
+  seasonId: number,
+  leagueId: number
+): Promise<QueryResult<ClubSeasonSummary[]>> {
+  return fetchSupabaseData<ClubSeasonSummary>(
+    "club_season_summary_view",
+    "*",
+    {
+      season_id: `eq.${seasonId}`,
+      league_id: `eq.${leagueId}`,
+      order: "team_name.asc",
+    }
+  );
 }

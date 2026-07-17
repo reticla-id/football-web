@@ -75,4 +75,5 @@ export interface PlayerSummary {
 
   interceptions: number;
   successful_interceptions: number;
+  saves: number;
 }
