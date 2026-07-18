@@ -191,16 +191,15 @@ export default function HomeClient() {
     [dashboardData, effectiveLeague, effectiveSeason]
   );
 
-  const filteredTopRedcards = useMemo(
-    () =>
-      (dashboardData?.topRedcards ?? []).filter(
-        (row) =>
-          row.league === effectiveLeague && row.season === effectiveSeason
-      ),
-    [dashboardData, effectiveLeague, effectiveSeason]
-  );
-
   const filteredLeagueStats = useMemo(() => {
+    const matchedLeagueStats = (dashboardData?.leagueStats ?? []).find(
+      (row) => row.league === effectiveLeague && row.season === effectiveSeason
+    );
+
+    if (matchedLeagueStats) {
+      return matchedLeagueStats;
+    }
+
     const totalTeams = filteredStandings.length;
     const totalMatches =
       filteredStandings.reduce((sum, row) => sum + row.played, 0) / 2;
@@ -210,40 +209,45 @@ export default function HomeClient() {
     );
 
     return {
+      seasonId: 0,
+      season: effectiveSeason,
+      leagueId: 0,
+      league: effectiveLeague,
       totalTeams,
       totalMatches,
-      avgGoals: totalMatches > 0 ? totalGoals / totalMatches : 0,
+      totalGoals,
+      avgGoalsPerMatch: totalMatches > 0 ? totalGoals / totalMatches : 0,
     };
-  }, [filteredStandings]);
+  }, [dashboardData, effectiveLeague, effectiveSeason, filteredStandings]);
 
   const summaryStats = useMemo(
     () => [
       {
         label: "Teams",
-        value: dashboardData?.leagueStats.totalTeams ?? 0,
+        value: filteredLeagueStats.totalTeams,
         icon: Shield,
         description: "Participating clubs",
       },
       {
         label: "Fixtures",
-        value: dashboardData?.topScorers.length ?? 0,
+        value: filteredLeagueStats.totalMatches,
         icon: CalendarDays,
         description: "Matches played",
       },
       {
         label: "Goals",
-        value: dashboardData?.recentFixtures.length ?? 0,
+        value: filteredLeagueStats.totalGoals,
         icon: Goal,
         description: "Goals scored",
       },
       {
         label: "Avg Goals / Match",
-        value: dashboardData?.leagueStats.totalMatches ?? 0,
+        value: filteredLeagueStats.avgGoalsPerMatch.toFixed(1),
         icon: BarChart3,
         description: "Goals per Match",
       },
     ],
-    [dashboardData]
+    [filteredLeagueStats]
   );
 
   const topScorersRows = useMemo(
@@ -272,20 +276,6 @@ export default function HomeClient() {
         label: "Assists",
       })),
     [filteredTopAssists]
-  );
-
-  const topRedcardsRows = useMemo(
-    () =>
-      filteredTopRedcards.slice(0, 10).map((player, index) => ({
-        rank: index + 1,
-        name: player.player,
-        team: player.team,
-        image_path: player.image_path,
-        team_image_path: player.team_image_path,
-        value: player.redcards,
-        label: "Red Cards",
-      })),
-    [filteredTopRedcards]
   );
 
   const recentFixtures = useMemo(() => fixtures.slice(0, 5), [fixtures]);
@@ -522,7 +512,7 @@ export default function HomeClient() {
                     <div className="flex items-center justify-between -2xl border border-zinc-800 bg-zinc-950/65 px-4 py-3">
                       <span>Average goals</span>
                       <span className="font-semibold text-white">
-                        {filteredLeagueStats.avgGoals.toFixed(1)}
+                        {filteredLeagueStats.avgGoalsPerMatch.toFixed(1)}
                       </span>
                     </div>
                   </CardContent>

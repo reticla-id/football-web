@@ -12,7 +12,8 @@ import type {
   UserProfile,
   InsertShortlistCollection,
   ShortlistCollection,
-  ShortlistPlayer
+  ShortlistPlayer,
+  LeagueStats
 } from "./types";
 import type { SquadPlayer } from "@/types/squad";
 import type { TeamFixture, FixtureLineups, FixtureStatistic, FixtureTimelineEvent } from "@/types/fixture";
@@ -273,6 +274,7 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
     { data: topScorers, error: topScorersError },
     { data: assists, error: assistsError },
     { data: redCards, error: redCardsError },
+    { data: leagueStats, error: leagueStatsError},
   ] = await Promise.all([
     fetchSupabaseData<Record<string, unknown>>(
       "standing_table",
@@ -308,13 +310,21 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
         order: "total.desc",
       }
     ),
+    fetchSupabaseData<Record<string, unknown>>(
+      "league_season_summary_view",
+      "season_id, season_name, league_id, league_name, total_teams, total_matches, total_goals, avg_goals_per_match",
+      {
+        order: "season_id.desc",
+      }
+    ),
   ]);
 
   if (
     standingsError ||
     topScorersError ||
     assistsError ||
-    redCardsError
+    redCardsError ||
+    leagueStatsError
   ) {
     return {
       data: null,
@@ -323,6 +333,7 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
         topScorersError,
         assistsError,
         redCardsError,
+        leagueStatsError
       ]
         .filter(Boolean)
         .join("; "),
@@ -429,6 +440,17 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
       };
     });
 
+    const normalizedLeagueStats: LeagueStats[] = (leagueStats ?? []).map((row) => ({
+      seasonId: Number(row.season_id),
+      season: String(row.season_name),
+      leagueId: Number(row.league_id),
+      league: String(row.league_name),
+      totalTeams: Number(row.total_teams),
+      totalMatches: Number(row.total_matches),
+      totalGoals: Number(row.total_goals),
+      avgGoalsPerMatch: Number(row.avg_goals_per_match),
+    }));
+
   const normalizedTopScorers = normalizeTopScorers(topScorers ?? []);
   const normalizedTopAssists = normalizeTopAssists(assists ?? []);
   const normalizedRedCards = normalizeTopRedcards(redCards ?? []);
@@ -441,12 +463,7 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
       topRedcards: normalizedRedCards,
       recentFixtures: [],
       upcomingFixtures: [],
-      leagueStats: {
-        totalTeams: 0,
-        totalMatches: 0,
-        avgGoals: 0,
-        homeWins: 0,
-      },
+      leagueStats: normalizedLeagueStats
     },
     error: null,
   };

@@ -59,7 +59,7 @@ export const SECTIONS: SidebarSection[] = [
         href: "/match-up",
         label: "Match Up",
         icon: Swords,
-        badge: "Soon",
+        badge: "New",
       },
       {
         href: "/simulation",

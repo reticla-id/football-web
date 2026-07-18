@@ -10,6 +10,7 @@ import type {
   ExplorerSortColumn,
   ExplorerSortState,
 } from "@/app/radar/explorer/components/types";
+import { normalizeExplorerPlayer } from "@/app/radar/components/explorer-player-utils";
 import RadarExplorerPagination from "@/app/radar/explorer/components/RadarExplorerPagination";
 import RadarExplorerTable from "@/app/radar/explorer/components/RadarExplorerTable";
 import RadarBackButton from "@/app/radar/components/RadarBackButton";
@@ -37,7 +38,6 @@ import type {
   ShortlistCollection,
   ShortlistPlayer,
 } from "@/lib/supabase/types";
-import type { PlayerSummary } from "@/types/player";
 
 import ConfirmActionModal from "./ConfirmActionModal";
 import CreateCollectionModal from "./CreateCollectionModal";
@@ -553,61 +553,4 @@ export default function ShortlistClient() {
       </div>
     </div>
   );
-}
-
-function normalizeExplorerPlayer(player: PlayerSummary): ExplorerPlayer {
-  const passAccuracyValue = player.pass_accuracy ?? 0;
-
-  return {
-    ...player,
-    slug: slugify(player.display_name),
-    age: getAgeFromDateOfBirth(player.date_of_birth),
-    heightValue: player.height ?? null,
-    appearances: null,
-    positionLabel: player.position_name?.trim() || "Profile unavailable",
-    clubName: player.team_name?.trim() || "Club unavailable",
-    clubLogo: player.team_image_path ?? null,
-    nationality: null,
-    country: null,
-    league: null,
-    transferStatus: null,
-    passAccuracyValue,
-    tacklesPer90: 0,
-    interceptionsPer90: 0,
-    savesPer90: 0,
-    traits: ["Unclassified"],
-    playstyles: ["General Profile"],
-  };
-}
-
-function getAgeFromDateOfBirth(dateOfBirth: string | null) {
-  if (!dateOfBirth) {
-    return null;
-  }
-
-  const birthDate = new Date(dateOfBirth);
-  if (Number.isNaN(birthDate.getTime())) {
-    return null;
-  }
-
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDifference = today.getMonth() - birthDate.getMonth();
-
-  if (
-    monthDifference < 0 ||
-    (monthDifference === 0 && today.getDate() < birthDate.getDate())
-  ) {
-    age -= 1;
-  }
-
-  return age;
-}
-
-function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "");
 }

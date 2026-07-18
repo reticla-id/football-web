@@ -114,6 +114,17 @@ export interface StandingRow {
   season?: string;
 }
 
+export interface LeagueStats {
+  seasonId: number;
+  season: string;
+  leagueId: number;
+  league: string;
+  totalTeams: number;
+  totalMatches: number;
+  totalGoals: number;
+  avgGoalsPerMatch: number;
+}
+
 export interface DashboardStats {
   standings: StandingRow[];
   topScorers: Array<{ player: string; position?: string; team: string; goals: number; image_path: string, team_image_path: string; season?: string; league?: string; }>;
@@ -121,12 +132,7 @@ export interface DashboardStats {
   topRedcards: Array<{ player: string; position?: string; team: string; redcards: number; image_path: string, team_image_path: string; season?: string; league?: string;  }>;
   recentFixtures: Fixture[];
   upcomingFixtures: Fixture[];
-  leagueStats: {
-    totalTeams: number;
-    totalMatches: number;
-    avgGoals: number;
-    homeWins: number;
-  };
+  leagueStats: LeagueStats[];
 }
 
 export interface InsertShortlistCollection {

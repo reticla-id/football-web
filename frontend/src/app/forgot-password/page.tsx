@@ -1,17 +1,80 @@
 "use client";
 
+import { useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Shield } from "lucide-react";
+import { LoaderCircle, Shield } from "lucide-react";
 
+import { AuthFeedbackMessage } from "@/components/auth/auth-feedback-message";
+import { AuthProcessingOverlay } from "@/components/auth/auth-processing-overlay";
+import {
+  mapAuthErrorMessage,
+  validateEmail,
+} from "@/components/auth/auth-utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/lib/supabase/client";
 
 export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ email?: string }>({});
+  const emailRef = useRef<HTMLInputElement>(null);
+  const loadingMessage = useMemo(() => "Sending reset link...", []);
+
+  const validateForm = () => {
+    const nextErrors = {
+      email: validateEmail(email),
+    };
+
+    setFieldErrors(nextErrors);
+    return nextErrors;
+  };
+
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (isLoading) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const nextErrors = validateForm();
+    if (nextErrors.email) {
+      setIsLoading(false);
+      emailRef.current?.focus();
+      return;
+    }
+
+    if (!supabase) {
+      setError("Authentication service is currently unavailable.");
+      setIsLoading(false);
+      return;
+    }
+
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email);
+
+    if (resetError) {
+      setError(mapAuthErrorMessage(resetError.message));
+      setIsLoading(false);
+      return;
+    }
+
+    setSuccess("Password reset email sent. Check your inbox for the recovery link.");
+    setIsLoading(false);
+  };
+
   return (
     <div className="min-h-screen bg-zinc-950">
       <div className="grid min-h-screen lg:grid-cols-12">
-        <section className="flex items-center justify-center px-8 py-12 lg:col-span-5">
+        <section className="relative flex items-center justify-center px-8 py-12 lg:col-span-5">
+          <AuthProcessingOverlay visible={isLoading} message={loadingMessage} />
+
           <div className="w-full max-w-md">
             <div className="mb-10">
               <div className="accent-bg-soft accent-border-soft accent-text mb-8 flex h-14 w-14 items-center justify-center border">
@@ -27,10 +90,37 @@ export default function ForgotPasswordPage() {
               </p>
             </div>
 
-            <div className="space-y-5">
-              <Input placeholder="Email" type="email" />
+            <form className="space-y-5" onSubmit={handleSubmit} aria-busy={isLoading}>
+              <div className="space-y-2">
+                <Input
+                  ref={emailRef}
+                  placeholder="Email"
+                  type="email"
+                  value={email}
+                  onChange={(event) => {
+                    const nextValue = event.target.value;
+                    setEmail(nextValue);
+                    setFieldErrors({
+                      email: nextValue ? validateEmail(nextValue) : "Email is required.",
+                    });
+                  }}
+                  disabled={isLoading}
+                  aria-invalid={Boolean(fieldErrors.email)}
+                  aria-describedby={fieldErrors.email ? "forgot-password-email-error" : undefined}
+                />
 
-              <Button 
+                {fieldErrors.email ? (
+                  <p id="forgot-password-email-error" className="text-sm text-rose-400">
+                    {fieldErrors.email}
+                  </p>
+                ) : null}
+              </div>
+
+              {error ? <AuthFeedbackMessage tone="error" message={error} /> : null}
+              {success ? <AuthFeedbackMessage tone="success" message={success} /> : null}
+
+              <Button
+                type="submit"
                 className="
                   w-full
                   bg-[var(--accent)]
@@ -40,10 +130,25 @@ export default function ForgotPasswordPage() {
                   active:scale-[0.99]
                   transition-all
                   duration-200
-                ">
-                Send reset link
+                "
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    Sending reset link...
+                  </span>
+                ) : (
+                  "Send reset link"
+                )}
               </Button>
-            </div>
+
+              {isLoading ? (
+                <p className="text-sm text-zinc-500" role="status" aria-live="polite">
+                  Sending reset link...
+                </p>
+              ) : null}
+            </form>
 
             <div className="mt-8 flex items-center justify-between text-sm">
               <span className="text-zinc-500">Remembered your password?</span>
