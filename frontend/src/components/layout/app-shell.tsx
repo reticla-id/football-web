@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu } from "lucide-react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { NavigationFeedback } from "@/components/layout/navigation-feedback";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -22,7 +22,6 @@ type NavigationPendingState = {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
   const { theme, setTheme, currentUser, setCurrentUser } = useAppStore();
 
@@ -39,11 +38,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   const isMobileSidebarVisible =
     mobileSidebarOpen && mobileSidebarPathname === pathname;
-  const routeKey = useMemo(() => {
-    const currentPathname = pathname ?? "";
-    const currentSearch = searchParams?.toString();
-    return currentSearch ? `${currentPathname}?${currentSearch}` : currentPathname;
-  }, [pathname, searchParams]);
+  const routeKey = pathname ?? "";
   const isNavigationFeedbackVisible = navigationPending !== null;
 
   const clearNavigationTimeouts = useCallback(() => {
