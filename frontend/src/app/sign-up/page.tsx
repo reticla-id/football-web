@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { LoaderCircle } from "lucide-react";
 
 import { AuthFeedbackMessage } from "@/components/auth/auth-feedback-message";
 import { AuthProcessingOverlay } from "@/components/auth/auth-processing-overlay";

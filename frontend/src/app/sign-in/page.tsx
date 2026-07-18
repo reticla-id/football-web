@@ -236,7 +236,7 @@ export default function SignInPage() {
                 className="accent-text"
               >
                 Create account
-              </Link> */}
+              </Link>
 
             </div>
           </div>
