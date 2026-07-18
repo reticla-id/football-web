@@ -2,8 +2,8 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import { Menu } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { NavigationFeedback } from "@/components/layout/navigation-feedback";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -13,6 +13,12 @@ import { getCurrentUserProfile, signOutSession } from "@/lib/supabase/queries";
 
 const NAVIGATION_MIN_VISIBLE_MS = 180;
 const NAVIGATION_FAILSAFE_MS = 10000;
+
+type NavigationPendingState = {
+  href: string;
+  sourceRouteKey: string;
+  startedAt: number;
+};
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -26,9 +32,63 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileSidebarPathname, setMobileSidebarPathname] = useState(pathname);
+  const [navigationPending, setNavigationPending] =
+    useState<NavigationPendingState | null>(null);
+  const navigationTimeoutRef = useRef<number | null>(null);
+  const navigationFailsafeRef = useRef<number | null>(null);
 
   const isMobileSidebarVisible =
     mobileSidebarOpen && mobileSidebarPathname === pathname;
+  const routeKey = useMemo(() => {
+    const currentPathname = pathname ?? "";
+    const currentSearch = searchParams?.toString();
+    return currentSearch ? `${currentPathname}?${currentSearch}` : currentPathname;
+  }, [pathname, searchParams]);
+  const isNavigationFeedbackVisible = navigationPending !== null;
+
+  const clearNavigationTimeouts = useCallback(() => {
+    if (navigationTimeoutRef.current != null) {
+      window.clearTimeout(navigationTimeoutRef.current);
+      navigationTimeoutRef.current = null;
+    }
+
+    if (navigationFailsafeRef.current != null) {
+      window.clearTimeout(navigationFailsafeRef.current);
+      navigationFailsafeRef.current = null;
+    }
+  }, []);
+
+  const startNavigationFeedback = useCallback(
+    (href: string) => {
+      if (typeof window === "undefined") {
+        return;
+      }
+
+      const nextUrl = new URL(href, window.location.origin);
+      if (nextUrl.origin !== window.location.origin) {
+        return;
+      }
+
+      const nextRouteKey = `${nextUrl.pathname}${nextUrl.search}`;
+      if (nextRouteKey === routeKey) {
+        return;
+      }
+
+      clearNavigationTimeouts();
+
+      setNavigationPending({
+        href,
+        sourceRouteKey: routeKey,
+        startedAt: Date.now(),
+      });
+
+      navigationFailsafeRef.current = window.setTimeout(() => {
+        setNavigationPending(null);
+        navigationFailsafeRef.current = null;
+      }, NAVIGATION_FAILSAFE_MS);
+    },
+    [clearNavigationTimeouts, routeKey]
+  );
 
   useEffect(() => {
     if (!supabase) {
