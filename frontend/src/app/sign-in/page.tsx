@@ -231,9 +231,13 @@ export default function SignInPage() {
                 Forgot password?
               </Link>
 
-              {/* <Link href="/sign-up" className="accent-text">
+              <Link
+                href="/sign-up"
+                className="accent-text"
+              >
                 Create account
               </Link> */}
+
             </div>
           </div>
         </section>
@@ -267,18 +271,39 @@ export default function SignInPage() {
             <Card className="w-[360px] border-zinc-800 bg-zinc-900/60 backdrop-blur-xl">
               <CardContent className="space-y-6 p-6">
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Competitions</span>
-                  <span className="font-semibold text-white">24+</span>
+
+                  <span className="text-zinc-400">
+                    Competitions
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    15+
+                  </span>
+
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Clubs</span>
-                  <span className="font-semibold text-white">650+</span>
+
+                  <span className="text-zinc-400">
+                    Clubs
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    300+
+                  </span>
+
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <span className="text-zinc-400">Players</span>
-                  <span className="font-semibold text-white">30,000+</span>
+
+                  <span className="text-zinc-400">
+                    Players
+                  </span>
+
+                  <span className="font-semibold text-white">
+                    15,000+
+                  </span>
+
                 </div>
               </CardContent>
             </Card>

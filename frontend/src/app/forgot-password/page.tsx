@@ -77,8 +77,15 @@ export default function ForgotPasswordPage() {
 
           <div className="w-full max-w-md">
             <div className="mb-10">
-              <div className="accent-bg-soft accent-border-soft accent-text mb-8 flex h-14 w-14 items-center justify-center border">
-                <Shield className="h-6 w-6" />
+              <div className="accent-text mb-8 flex h-14 w-14 items-center justify-center">
+                <Image
+                  src="https://i.ibb.co.com/Z6tKqhkm/pantauaja-vector-no-bg.png"
+                  alt="Reticla"
+                  width={80}
+                  height={80}
+                  className="object-contain"
+                  priority
+                />
               </div>
 
               <h1 className="font-display text-4xl text-white">

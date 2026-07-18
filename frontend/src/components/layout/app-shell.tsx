@@ -1,8 +1,9 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Menu } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 import { NavigationFeedback } from "@/components/layout/navigation-feedback";
 import { Sidebar } from "@/components/layout/sidebar";
@@ -23,63 +24,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isAuthRoute = authRoutes.includes(pathname ?? "");
 
   const [collapsed, setCollapsed] = useState(false);
-  const [navigationPending, setNavigationPending] = useState<{
-    startedAt: number;
-    sourceRouteKey: string;
-  } | null>(null);
-  const navigationTimeoutRef = useRef<number | null>(null);
-  const navigationFailsafeRef = useRef<number | null>(null);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [mobileSidebarPathname, setMobileSidebarPathname] = useState(pathname);
 
-  const routeKey = useMemo(() => {
-    const params = searchParams.toString();
-    return `${pathname ?? ""}${params ? `?${params}` : ""}`;
-  }, [pathname, searchParams]);
-
-  const isNavigationFeedbackVisible = navigationPending !== null;
-
-  const clearNavigationTimeouts = useCallback(() => {
-    if (navigationTimeoutRef.current !== null) {
-      window.clearTimeout(navigationTimeoutRef.current);
-      navigationTimeoutRef.current = null;
-    }
-
-    if (navigationFailsafeRef.current !== null) {
-      window.clearTimeout(navigationFailsafeRef.current);
-      navigationFailsafeRef.current = null;
-    }
-  }, []);
-
-  const startNavigationFeedback = useCallback(
-    (href: string) => {
-      if (typeof window === "undefined") {
-        return;
-      }
-
-      const currentUrl = new URL(window.location.href);
-      const destinationUrl = new URL(href, currentUrl);
-      const destinationRouteKey = `${destinationUrl.pathname}${destinationUrl.search}`;
-
-      if (
-        destinationUrl.origin !== currentUrl.origin ||
-        destinationRouteKey === routeKey
-      ) {
-        return;
-      }
-
-      clearNavigationTimeouts();
-
-      const startedAt = Date.now();
-      setNavigationPending({
-        startedAt,
-        sourceRouteKey: routeKey,
-      });
-
-      navigationFailsafeRef.current = window.setTimeout(() => {
-        setNavigationPending(null);
-      }, NAVIGATION_FAILSAFE_MS);
-    },
-    [clearNavigationTimeouts, routeKey]
-  );
+  const isMobileSidebarVisible =
+    mobileSidebarOpen && mobileSidebarPathname === pathname;
 
   useEffect(() => {
     if (!supabase) {
@@ -206,7 +155,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           currentUser={currentUser}
           theme={theme}
           collapsed={collapsed}
+          mobileOpen={isMobileSidebarVisible}
           onToggleCollapse={() => setCollapsed(!collapsed)}
+          onCloseMobile={() => setMobileSidebarOpen(false)}
           onToggleTheme={() => setTheme(theme === "dark" ? "light" : "dark")}
           onLogout={async () => {
             await signOutSession();
@@ -216,8 +167,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           }}
         />
 
-        <main className="relative flex-1 overflow-hidden">
+        <main className="relative min-w-0 flex-1 overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,_color-mix(in_srgb,var(--accent)_8%,transparent),_transparent_24%),radial-gradient(circle_at_bottom_left,_rgba(255,255,255,0.03),_transparent_22%)]" />
+
+          <div className="sticky top-0 z-30 flex items-center justify-between border-b border-zinc-800/70 bg-black/75 px-4 py-3 backdrop-blur lg:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setMobileSidebarPathname(pathname);
+                setMobileSidebarOpen(true);
+              }}
+              className="inline-flex h-10 w-10 items-center justify-center border border-zinc-800 bg-zinc-950/80 text-zinc-200 transition-colors hover:border-zinc-700 hover:bg-zinc-900"
+              aria-label="Open navigation"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+
+            <p className="font-display text-[1.35rem] leading-none text-white">
+              Reticla
+            </p>
+
+            <div className="h-10 w-10" aria-hidden="true" />
+          </div>
 
           <AnimatePresence mode="wait">
             <motion.div

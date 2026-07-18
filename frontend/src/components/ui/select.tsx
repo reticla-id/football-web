@@ -60,11 +60,13 @@ export const SelectContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       position={position}
+      collisionPadding={12}
       className={cn(
         `
         z-50
         min-w-[var(--radix-select-trigger-width)]
         w-[var(--radix-select-trigger-width)]
+        max-w-[calc(100vw-24px)]
 
         overflow-hidden
         -xl

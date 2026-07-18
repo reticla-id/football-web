@@ -430,7 +430,7 @@ export default function RadarExplorerPage() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
+        <div className="grid gap-6 xl:grid-cols-[292px_minmax(0,1fr)] xl:items-start 2xl:grid-cols-[304px_minmax(0,1fr)]">
           <RadarExplorerFilters
             filters={filters}
             onFiltersChange={handleFiltersChange}
