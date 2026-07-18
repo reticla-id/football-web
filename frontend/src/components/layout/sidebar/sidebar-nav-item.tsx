@@ -65,7 +65,7 @@ export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProp
         {!collapsed ? (
           <div className="relative z-10 flex items-start gap-1">
             <span
-              className={`font-medium transition-colors ${
+              className={`font-display text-[18px] font-medium tracking-[0.04em] transition-colors ${
                 active ? "text-white" : "text-zinc-400 group-hover:text-white"
               }`}
             >
@@ -74,7 +74,7 @@ export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProp
 
             {item.badge && (
               <sup
-                className={`text-[9px] font-semibold uppercase tracking-wide ${
+                className={`font-display text-[12px] font-semibold uppercase tracking-[0.12em] ${
                   badgeStyles[item.badge?.toLowerCase() ?? ""] ??
                   (active
                     ? "accent-text"

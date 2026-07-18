@@ -28,7 +28,7 @@ export function SidebarNav({ collapsed, onItemSelect }: SidebarNavProps) {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -4 }}
                   transition={{ duration: 0.18 }}
-                  className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-zinc-600"
+                  className="mb-2 px-3 text-[9px] font-semibold uppercase tracking-[0.28em] text-zinc-600"
                 >
                   {section.title}
                 </motion.p>

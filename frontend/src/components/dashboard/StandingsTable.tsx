@@ -82,13 +82,15 @@ function slugify(value: string) {
 export function StandingsTable({ standings }: { standings: StandingRow[] }) {
   return (
     <div className="overflow-hidden border border-zinc-800/80 bg-[linear-gradient(180deg,rgba(24,24,24,0.9),rgba(13,13,13,0.92))]">
-      <div className="overflow-x-auto">
-        <table className="w-full table-fixed divide-y divide-zinc-800 text-sm">
+      <div className="overflow-x-auto overscroll-x-contain">
+        <table className="min-w-[620px] w-full divide-y divide-zinc-800 text-sm sm:min-w-0">
           <thead className="bg-zinc-950/90 text-zinc-500">
             <tr>
               <th className="w-14 px-2 py-3 text-center font-medium">Pos</th>
               <th className="w-12 px-2 py-3 text-center font-medium" aria-label="Trend" />
-              <th className="px-3 py-3 text-left font-medium">Club</th>
+              <th className="min-w-[190px] px-3 py-3 text-left font-medium sm:min-w-[220px]">
+                Club
+              </th>
               <th className="w-10 px-2 py-3 text-center font-medium">P</th>
               <th className="w-10 px-2 py-3 text-center font-medium">W</th>
               <th className="w-10 px-2 py-3 text-center font-medium">D</th>
@@ -124,17 +126,17 @@ export function StandingsTable({ standings }: { standings: StandingRow[] }) {
                     <Icon className={`mx-auto h-3.5 w-3.5 ${trend.className}`} />
                   </td>
 
-                  <td className="px-4 py-3">
+                  <td className="min-w-[190px] px-3 py-3 sm:min-w-[220px] sm:px-4">
                     <Link
                       href={`/teams/${slugify(row.team)}`}
-                      className="flex min-w-0 items-center gap-2 transition-colors hover:text-white"
+                      className="flex min-w-0 items-center gap-2.5 transition-colors hover:text-white"
                     >
                       <img
                         src={row.image_path || "/placeholder-club.png"}
                         alt={row.team}
                         className="h-7 w-7 shrink-0 bg-zinc-900 object-contain"
                       />
-                      <span className="truncate font-medium text-white">{row.team}</span>
+                      <span className="truncate pr-2 font-medium text-white">{row.team}</span>
                     </Link>
                   </td>
 

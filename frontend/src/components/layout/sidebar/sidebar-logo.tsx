@@ -9,13 +9,13 @@ interface SidebarLogoProps {
 
 export function SidebarLogo({ collapsed }: SidebarLogoProps) {
   return (
-    <Link href="/" className="flex items-center gap-3">
+    <Link href="/" className="flex items-center gap-0.5">
       <div className="flex h-11 w-11 items-center justify-center">
         <Image
           src="https://i.ibb.co.com/Z6tKqhkm/pantauaja-vector-no-bg.png"
           alt="Reticla"
-          width={44}
-          height={44}
+          width={36}
+          height={36}
           className="object-contain"
           priority
         />
@@ -23,7 +23,7 @@ export function SidebarLogo({ collapsed }: SidebarLogoProps) {
 
       {!collapsed ? (
         <div>
-          <p className="font-display text-[1.5rem] leading-none text-white">
+          <p className="font-display text-[1.2rem] leading-none text-white">
             RETICLA STUDIO
           </p>
 

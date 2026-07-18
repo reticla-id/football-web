@@ -25,7 +25,7 @@ export function Sidebar({
   const sidebarContent = (
     <aside
       className={`sticky top-0 flex h-screen flex-col border-r border-zinc-800/80 bg-[linear-gradient(180deg,rgba(17,17,17,0.96),rgba(8,8,8,0.98))] shadow-[24px_0_60px_rgba(0,0,0,0.22)] transition-all duration-300 ${
-        collapsed ? "w-20" : "w-66"
+        collapsed ? "w-20" : "w-60"
       }`}
     >
       <div className="flex items-center justify-between border-b border-zinc-800/70 px-5 py-5 lg:px-5 lg:py-6">

@@ -367,7 +367,7 @@ export default function HomeClient() {
 
           <section className="space-y-8">
             <div className="flex items-center justify-between">
-              <h2 className="text-[1.9rem] leading-none text-white">Recent Fixtures</h2>
+              <h2 className="text-[1.9rem] leading-none text-white">Recent & Upcoming Fixtures</h2>
 
               <Link
                 href="/fixtures"

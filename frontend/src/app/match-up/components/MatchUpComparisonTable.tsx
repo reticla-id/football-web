@@ -113,7 +113,7 @@ function ComparisonSection({
           {title}
         </h2>
         <p className="mt-2 text-sm leading-6 text-zinc-400">
-          Built from the same player object used by Radar Explorer. Placeholder values remain ready for future dataset expansion.
+          Head-to-head player comparison using standardized scouting metrics and performance statistics.
         </p>
       </div>
 
