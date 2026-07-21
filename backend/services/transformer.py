@@ -43,7 +43,8 @@ class Transformer:
             "formations": "formation_id",
             "lineups": "lineup_id",
             "ballcoordinates": "ballcoordinate_id",
-            "timeline": "timeline_id"
+            "timeline": "timeline_id",
+            "pressure": "pressure_id"
         }
 
         def flatten(prefix, value, row):
@@ -118,3 +119,17 @@ class Transformer:
             recurse(item, path, {})
 
         return pd.DataFrame(rows)
+    
+    @staticmethod
+    def extract_root_list(raw, key, parent=None):
+        data = raw.get("data", {})
+
+        rows = data.get(key, [])
+
+        df = pd.DataFrame(rows)
+
+        if parent:
+            for col, value in parent.items():
+                df[col] = value
+
+        return df

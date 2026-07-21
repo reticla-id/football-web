@@ -25,6 +25,9 @@ export interface Player {
   id: number;
   name: string;
   slug?: string;
+  team_id?: number | null;
+  league_id?: number | null;
+  season_id?: number | null;
   nationality?: string | null;
   position?: string | null;
   age?: number | null;
@@ -36,6 +39,26 @@ export interface Player {
   league?: string | null;
   number?: number | null;
   avatar?: string | null;
+}
+
+export interface GetPlayersFilters {
+  league_id?: number | null;
+  league_name?: string | null;
+  season_id?: number | null;
+  team_id?: number | null;
+  team_name?: string | null;
+  position?: string | null;
+  search?: string | null;
+  page?: number;
+  page_size?: number;
+  fetch_all?: boolean;
+}
+
+export interface GetPlayersResult {
+  players: Player[];
+  total: number;
+  page: number;
+  page_size: number;
 }
 
 export interface Fixture {

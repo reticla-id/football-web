@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getTeams } from "@/lib/supabase/queries";
+import { getTeamCountries, getTeams } from "@/lib/supabase/queries";
 import type { Team } from "@/types/team";
 
 const PAGE_SIZE = 12;
@@ -36,12 +36,13 @@ function mergeTeams(existingTeams: Team[], nextTeams: Team[]) {
 
 export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
+  const [countries, setCountries] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [isLoadingInitial, setIsLoadingInitial] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [search, setSearch] = useState("");
-  const [countryFilter, setCountryFilter] = useState("All");
+  const [countryFilter, setCountryFilter] = useState("Indonesia");
 
   const loaderRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
@@ -71,7 +72,11 @@ export default function TeamsPage() {
       setIsLoadingMore(true);
     }
 
-    const { data, error: queryError } = await getTeams(pageNumber * PAGE_SIZE, PAGE_SIZE);
+    const { data, error: queryError } = await getTeams(
+      pageNumber * PAGE_SIZE,
+      PAGE_SIZE,
+      countryFilter
+    );
 
     if (queryError) {
       setError(queryError);
@@ -96,11 +101,26 @@ export default function TeamsPage() {
     loadingRef.current = false;
     setIsLoadingInitial(false);
     setIsLoadingMore(false);
-  }, []);
+  }, [countryFilter]);
 
   useEffect(() => {
     void loadTeams(0, true);
   }, [loadTeams]);
+
+  useEffect(() => {
+    const loadCountries = async () => {
+      const { data, error: queryError } = await getTeamCountries();
+
+      if (queryError || !data) {
+        setError(queryError ?? "Unable to load countries.");
+        return;
+      }
+
+      setCountries(data);
+    };
+
+    void loadCountries();
+  }, []);
 
   useEffect(() => {
     const loader = loaderRef.current;
@@ -125,20 +145,6 @@ export default function TeamsPage() {
     return () => observer.disconnect();
   }, [loadTeams]);
 
-  const countries = useMemo(
-    () => [
-      "All",
-      ...Array.from(
-        new Set(
-          teams
-            .map((team) => team.country)
-            .filter((value): value is string => Boolean(value))
-        )
-      ).sort((a, b) => a.localeCompare(b)),
-    ],
-    [teams]
-  );
-
   const filteredTeams = useMemo(() => {
     const keyword = search.trim().toLowerCase();
 
@@ -149,10 +155,7 @@ export default function TeamsPage() {
         (team.league ?? "").toLowerCase().includes(keyword) ||
         (team.country ?? "").toLowerCase().includes(keyword);
 
-      const matchCountry =
-        countryFilter === "All" || team.country === countryFilter;
-
-      return matchSearch && matchCountry;
+      return matchSearch;
     });
   }, [countryFilter, search, teams]);
 
@@ -186,7 +189,7 @@ export default function TeamsPage() {
               <SelectTrigger>
                 <div className="flex min-w-0 items-center gap-1.5">
                   <span className="shrink-0 text-zinc-500">Country:</span>
-                  <SelectValue placeholder="All" />
+                  <SelectValue placeholder="Country" />
                 </div>
               </SelectTrigger>
 

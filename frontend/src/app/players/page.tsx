@@ -13,24 +13,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getPlayersSummary } from "@/lib/supabase/queries";
+import { getPlayers, getPlayersSummary } from "@/lib/supabase/queries";
+import type { Player } from "@/lib/supabase/types";
 import { buildPlayerSlug } from "@/lib/player-utils";
 import type { PlayerSummary } from "@/types/player";
 
 const ITEMS_PER_PAGE = 25;
 
+type PlayerCardRow = {
+  player_id: number;
+  display_name: string;
+  image_path: string | null;
+  team_name: string | null;
+  team_image_path: string | null;
+  league_name: string | null;
+  position: string | null;
+  slug: string;
+};
+
 export default function PlayersPage() {
-  const [players, setPlayers] = useState<PlayerSummary[]>([]);
+  const [filterSource, setFilterSource] = useState<PlayerSummary[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [leagueFilter, setLeagueFilter] = useState("");
   const [clubFilter, setClubFilter] = useState("All");
   const [positionFilter, setPositionFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalPlayers, setTotalPlayers] = useState(0);
 
   useEffect(() => {
-    const loadPlayers = async () => {
+    const loadFilterSource = async () => {
       setLoading(true);
 
       const { data, error: queryError } = await getPlayersSummary();
@@ -41,24 +56,32 @@ export default function PlayersPage() {
         return;
       }
 
-      setPlayers(data);
+      setFilterSource(data);
       setError(null);
       setLoading(false);
     };
 
-    void loadPlayers();
+    void loadFilterSource();
   }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(search.trim());
+    }, 250);
+
+    return () => window.clearTimeout(timeout);
+  }, [search]);
 
   const leagues = useMemo(
     () =>
       Array.from(
         new Set(
-          players
+          filterSource
             .map((player) => player.league_name?.trim())
             .filter((value): value is string => Boolean(value))
         )
       ).sort((a, b) => a.localeCompare(b)),
-    [players]
+    [filterSource]
   );
 
   const defaultLeague = useMemo(() => {
@@ -84,8 +107,8 @@ export default function PlayersPage() {
 
   const clubs = useMemo(() => {
     const visiblePlayers = effectiveLeagueFilter
-      ? players.filter((player) => player.league_name === effectiveLeagueFilter)
-      : players;
+      ? filterSource.filter((player) => player.league_name === effectiveLeagueFilter)
+      : filterSource;
 
     return [
       "All",
@@ -97,14 +120,14 @@ export default function PlayersPage() {
         )
       ).sort((a, b) => a.localeCompare(b)),
     ];
-  }, [effectiveLeagueFilter, players]);
+  }, [effectiveLeagueFilter, filterSource]);
 
   const positions = useMemo(
     () => [
       "All",
       ...Array.from(
         new Set(
-          players
+          filterSource
             .map(
               (player) =>
                 player.detailed_position_name?.trim() ?? player.position_name?.trim()
@@ -113,7 +136,7 @@ export default function PlayersPage() {
         )
       ).sort((a, b) => a.localeCompare(b)),
     ],
-    [players]
+    [filterSource]
   );
 
   const effectiveClubFilter = useMemo(
@@ -121,45 +144,58 @@ export default function PlayersPage() {
     [clubFilter, clubs]
   );
 
-  const filteredPlayers = useMemo(() => {
-    const keyword = search.trim().toLowerCase();
+  useEffect(() => {
+    if (!effectiveLeagueFilter) {
+      setPlayers([]);
+      setTotalPlayers(0);
+      return;
+    }
 
-    return players.filter((player) => {
-      const position =
-        player.detailed_position_name?.trim() ?? player.position_name?.trim() ?? "";
-      const matchesSearch =
-        keyword === "" ||
-        player.display_name.toLowerCase().includes(keyword) ||
-        (player.team_name ?? "").toLowerCase().includes(keyword) ||
-        (player.league_name ?? "").toLowerCase().includes(keyword) ||
-        position.toLowerCase().includes(keyword) ||
-        (player.nationality ?? "").toLowerCase().includes(keyword);
+    const loadPlayers = async () => {
+      setLoading(true);
 
-      const matchesLeague =
-        effectiveLeagueFilter === "" || player.league_name === effectiveLeagueFilter;
-      const matchesClub =
-        effectiveClubFilter === "All" || player.team_name === effectiveClubFilter;
-      const matchesPosition = positionFilter === "All" || position === positionFilter;
+      const { data, error: queryError } = await getPlayers({
+        league_name: effectiveLeagueFilter,
+        team_name: effectiveClubFilter === "All" ? undefined : effectiveClubFilter,
+        position: positionFilter === "All" ? undefined : positionFilter,
+        search: debouncedSearch || undefined,
+        page: currentPage,
+        page_size: ITEMS_PER_PAGE,
+      });
 
-      return matchesSearch && matchesLeague && matchesClub && matchesPosition;
-    });
-  }, [players, search, effectiveLeagueFilter, effectiveClubFilter, positionFilter]);
+      if (queryError || !data) {
+        setError(queryError ?? "Unable to load players.");
+        setPlayers([]);
+        setTotalPlayers(0);
+        setLoading(false);
+        return;
+      }
 
-  const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / ITEMS_PER_PAGE));
+      setPlayers(data.players);
+      setTotalPlayers(data.total);
+      setError(null);
+      setLoading(false);
+    };
+
+    void loadPlayers();
+  }, [currentPage, debouncedSearch, effectiveClubFilter, effectiveLeagueFilter, positionFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(totalPlayers / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
-  const paginatedPlayers = filteredPlayers.slice(
-    (safeCurrentPage - 1) * ITEMS_PER_PAGE,
-    safeCurrentPage * ITEMS_PER_PAGE
-  );
-  const paginatedPlayersWithMeta = useMemo(
+
+  const paginatedPlayersWithMeta = useMemo<PlayerCardRow[]>(
     () =>
-      paginatedPlayers.map((player) => ({
-        ...player,
-        slug: buildPlayerSlug(player.display_name),
-        position:
-          player.detailed_position_name?.trim() ?? player.position_name?.trim() ?? null,
+      players.map((player) => ({
+        player_id: player.id,
+        display_name: player.name,
+        image_path: player.avatar ?? null,
+        team_name: player.club ?? null,
+        team_image_path: player.club_image_path ?? null,
+        league_name: player.league ?? null,
+        position: player.position ?? null,
+        slug: buildPlayerSlug(player.name),
       })),
-    [paginatedPlayers]
+    [players]
   );
 
   return (
@@ -255,7 +291,7 @@ export default function PlayersPage() {
         {loading ? <p className="text-zinc-400">Loading players...</p> : null}
         {error ? <p className="text-rose-400">{error}</p> : null}
 
-        {!loading && !error && filteredPlayers.length === 0 ? (
+        {!loading && !error && totalPlayers === 0 ? (
           <p className="text-sm text-zinc-400">
             No players match the selected search and filters.
           </p>
@@ -310,14 +346,14 @@ export default function PlayersPage() {
           <p className="text-sm text-zinc-400">
             Showing{" "}
             <span className="font-medium text-white">
-              {filteredPlayers.length === 0 ? 0 : (safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}
+              {totalPlayers === 0 ? 0 : (safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}
             </span>
             {" - "}
             <span className="font-medium text-white">
-              {Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredPlayers.length)}
+              {Math.min(safeCurrentPage * ITEMS_PER_PAGE, totalPlayers)}
             </span>
             {" of "}
-            <span className="font-medium text-white">{filteredPlayers.length}</span>
+            <span className="font-medium text-white">{totalPlayers}</span>
             {" players"}
           </p>
 

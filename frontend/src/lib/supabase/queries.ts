@@ -9,6 +9,8 @@ import type {
   FixtureSeasonOption,
   ClubSeasonSummary,
   Player,
+  GetPlayersFilters,
+  GetPlayersResult,
   UserProfile,
   InsertShortlistCollection,
   ShortlistCollection,
@@ -164,6 +166,21 @@ function getNestedString(
 
   const record = value as Record<string, unknown>;
   return typeof record[key] === "string" ? record[key] : null;
+}
+
+function getNestedNumber(
+  value: unknown,
+  key: string
+): number | null {
+  if (!value || typeof value !== "object") {
+    return null;
+  }
+
+  const record = value as Record<string, unknown>;
+  const nestedValue = record[key];
+  const parsedValue = Number(nestedValue);
+
+  return Number.isNaN(parsedValue) ? null : parsedValue;
 }
 
 export async function signUpWithEmail(email: string, password: string, username?: string): Promise<QueryResult<{ user: User | null; profile: UserProfile | null }>> {
@@ -534,8 +551,47 @@ function normalizeFixtureLeagueRow(
   };
 }
 
-export async function getTeams( offset = 0, limit = 24): Promise<QueryResult<Team[]>> {
-  const { data: clubs, error: clubsError } = await fetchSupabaseData<Record<string, unknown>>("clubs", "id,name,short_code,founded,country_id,league_id,image_path", { limit, offset, order: "name.asc" });
+export async function getTeams(
+  offset = 0,
+  limit = 24,
+  countryName?: string
+): Promise<QueryResult<Team[]>> {
+  const normalizedCountryName = countryName?.trim();
+
+  let countryFilterId: number | null = null;
+
+  if (normalizedCountryName) {
+    const { data: countryRows, error: countryError } = await fetchSupabaseData<Record<string, unknown>>(
+      "countries",
+      "id,name",
+      {
+        name: `eq.${normalizedCountryName}`,
+        limit: 1,
+      }
+    );
+
+    if (countryError) {
+      return { data: null, error: countryError };
+    }
+
+    const matchedCountry = countryRows?.[0];
+    if (!matchedCountry) {
+      return { data: [], error: null };
+    }
+
+    countryFilterId = Number(matchedCountry.id ?? 0) || null;
+  }
+
+  const { data: clubs, error: clubsError } = await fetchSupabaseData<Record<string, unknown>>(
+    "clubs",
+    "id,name,short_code,founded,country_id,league_id,image_path",
+    {
+      limit,
+      offset,
+      order: "name.asc",
+      country_id: countryFilterId != null ? `eq.${countryFilterId}` : undefined,
+    }
+  );
 
   if (clubsError) {
     return { data: null, error: clubsError };
@@ -588,99 +644,232 @@ export async function getTeams( offset = 0, limit = 24): Promise<QueryResult<Tea
   return { data: normalizedTeams as Team[], error: null };
 }
 
-export async function getPlayers(): Promise<QueryResult<Player[]>> {
-  const { data, error } = await fetchSupabaseData<Record<string, unknown>>(
-    "player_overview",
-    `
-      player_id,
-      display_name,
-      image_path,
-      date_of_birth,
-      height,
-      jersey_number,
-      country,
-      position,
-      team,
-      league
-    `,
+export async function getTeamCountries(): Promise<QueryResult<string[]>> {
+  const { data: clubs, error: clubsError } = await fetchSupabaseData<Record<string, unknown>>(
+    "clubs",
+    "country_id",
     {
-      order: "display_name.asc",
+      league_id: "not.is.null",
     }
   );
+
+  if (clubsError) {
+    return { data: null, error: clubsError };
+  }
+
+  const countryIds = Array.from(
+    new Set(
+      (clubs ?? [])
+        .map((club) => Number(club.country_id ?? 0))
+        .filter((countryId) => countryId > 0)
+    )
+  );
+
+  if (!countryIds.length) {
+    return { data: [], error: null };
+  }
+
+  const { data: countries, error: countriesError } = await fetchSupabaseData<Record<string, unknown>>(
+    "countries",
+    "id,name",
+    {
+      id: `in.(${countryIds.join(",")})`,
+      order: "name.asc",
+    }
+  );
+
+  if (countriesError) {
+    return { data: null, error: countriesError };
+  }
+
+  return {
+    data: Array.from(
+      new Set(
+        (countries ?? [])
+          .map((country) => String(country.name ?? "").trim())
+          .filter(Boolean)
+      )
+    ).sort((left, right) => left.localeCompare(right)),
+    error: null,
+  };
+}
+
+const DEFAULT_PLAYERS_PAGE_SIZE = 25;
+const MAX_PLAYERS_PAGE_SIZE = 100;
+const PLAYER_OVERVIEW_SELECT = `
+  player_id,
+  display_name,
+  image_path,
+  date_of_birth,
+  height,
+  weight,
+  country,
+  position,
+  team,
+  league
+`;
+
+function normalizePageSize(pageSize?: number) {
+  if (pageSize == null) {
+    return DEFAULT_PLAYERS_PAGE_SIZE;
+  }
+
+  return Math.min(Math.max(1, pageSize), MAX_PLAYERS_PAGE_SIZE);
+}
+
+function applyPlayersFilters(query: any, filters: GetPlayersFilters) {
+  if (filters.league_id != null) {
+    query = query.filter("league->>id", "eq", String(filters.league_id));
+  }
+
+  const normalizedLeagueName = filters.league_name?.trim();
+  if (normalizedLeagueName) {
+    query = query.filter("league->>name", "eq", normalizedLeagueName);
+  }
+
+  if (filters.season_id != null) {
+    query = query.eq("season_id", filters.season_id);
+  }
+
+  if (filters.team_id != null) {
+    query = query.filter("team->>id", "eq", String(filters.team_id));
+  }
+
+  const normalizedTeamName = filters.team_name?.trim();
+  if (normalizedTeamName) {
+    query = query.filter("team->>name", "eq", normalizedTeamName);
+  }
+
+  const normalizedPosition = filters.position?.trim();
+  if (normalizedPosition) {
+    query = query.filter("position->>name", "ilike", `%${escapeLikeValue(normalizedPosition)}%`);
+  }
+
+  const normalizedSearch = filters.search?.trim();
+  if (normalizedSearch) {
+    const escapedSearch = escapeLikeValue(normalizedSearch);
+    query = query.or(
+      [
+        `display_name.ilike.%${escapedSearch}%`,
+        `team->>name.ilike.%${escapedSearch}%`,
+        `league->>name.ilike.%${escapedSearch}%`,
+      ].join(",")
+    );
+  }
+
+  return query;
+}
+
+function normalizePlayerOverviewRow(player: Record<string, unknown>): Player {
+  const team = player.team;
+  const league = player.league;
+  const position = player.position;
+
+  return {
+    id: Number(player.player_id ?? 0),
+    name: String(player.display_name ?? ""),
+    slug: slugify(String(player.display_name ?? "")),
+    team_id: getNestedNumber(team, "id"),
+    league_id:
+      getNestedNumber(league, "id") ??
+      getNestedNumber(team, "league_id"),
+    season_id:
+      player.season_id != null && !Number.isNaN(Number(player.season_id))
+        ? Number(player.season_id)
+        : null,
+    nationality:
+      typeof player.country === "object" &&
+      player.country &&
+        "name" in player.country
+        ? getNestedString(player.country, "name")
+        : null,
+    position:
+      typeof position === "object" &&
+      position &&
+      "name" in position
+        ? getNestedString(position, "name")
+        : null,
+    age: getAgeFromDateOfBirth(player.date_of_birth),
+    height: player.height != null ? Number(player.height) : null,
+    weight: player.weight != null ? Number(player.weight) : null,
+    club:
+      typeof team === "object" &&
+      team &&
+      "name" in team
+        ? getNestedString(team, "name")
+        : null,
+    club_image_path:
+      typeof team === "object" &&
+      team &&
+      "image_path" in team
+        ? getNestedString(team, "image_path")
+        : null,
+    season: null,
+    league:
+      typeof league === "object" &&
+      league &&
+      "name" in league
+        ? getNestedString(league, "name")
+        : null,
+    number:
+      typeof position === "object" &&
+      position &&
+      "jersey_number" in position
+        ? getNestedNumber(position, "jersey_number")
+        : null,
+    avatar: typeof player.image_path === "string" ? player.image_path : null,
+  };
+}
+
+function escapeLikeValue(value: string) {
+  return value.replace(/[%_,]/g, (character) => `\\${character}`);
+}
+
+export async function getPlayers(
+  filters: GetPlayersFilters = {}
+): Promise<QueryResult<GetPlayersResult>> {
+  if (!supabase) {
+    return {
+      data: null,
+      error: "Supabase client is not initialized",
+    };
+  }
+
+  const page = Math.max(1, filters.page ?? 1);
+  const pageSize = normalizePageSize(filters.page_size);
+  const shouldFetchAll = filters.fetch_all === true;
+  const from = shouldFetchAll ? 0 : (page - 1) * pageSize;
+  const to = shouldFetchAll ? pageSize - 1 : from + pageSize - 1;
+
+  let query = supabase
+    .from("player_overview")
+    .select(PLAYER_OVERVIEW_SELECT, { count: "exact" })
+    .order("display_name", { ascending: true });
+
+  query = applyPlayersFilters(query, filters);
+
+  if (!shouldFetchAll) {
+    query = query.range(from, to);
+  }
+
+  const { data, error, count } = await query;
 
   if (error) {
     return {
       data: null,
-      error,
+      error: error.message,
     };
   }
 
-  const normalizedPlayers: Player[] = (data ?? []).map((player) => ({
-    id: Number(player.player_id ?? 0),
-
-    name: String(player.display_name ?? ""),
-
-    slug: slugify(String(player.display_name ?? "")),
-
-    nationality:
-      typeof player.country === "object" &&
-      player.country &&
-      "name" in player.country
-        ? getNestedString(player.country, "name")
-        : null,
-
-    position:
-      typeof player.position === "object" &&
-      player.position &&
-      "name" in player.position
-        ? getNestedString(player.position, "name")
-        : null,
-
-    age: getAgeFromDateOfBirth(player.date_of_birth),
-
-    height:
-      player.height != null
-        ? Number(player.height)
-        : null,
-
-    weight: null,
-
-    club:
-      typeof player.team === "object" &&
-      player.team &&
-      "name" in player.team
-        ? getNestedString(player.team, "name")
-        : null,
-
-    club_image_path:
-      typeof player.team === "object" &&
-      player.team &&
-      "image_path" in player.team
-        ? getNestedString(player.team, "image_path")
-        : null,
-
-    season: null,
-
-    league:
-      typeof player.league === "object" &&
-        player.league &&
-        "name" in player.league
-          ? getNestedString(player.league, "name")
-          : null,
-
-    number:
-      player.jersey_number != null
-        ? Number(player.jersey_number)
-        : null,
-
-    avatar:
-      typeof player.image_path === "string"
-        ? player.image_path
-        : null,
-  }));
+  const normalizedPlayers: Player[] = (data ?? []).map(normalizePlayerOverviewRow);
 
   return {
-    data: normalizedPlayers,
+    data: {
+      players: normalizedPlayers,
+      total: count ?? normalizedPlayers.length,
+      page,
+      page_size: shouldFetchAll ? normalizedPlayers.length : pageSize,
+    },
     error: null,
   };
 }
