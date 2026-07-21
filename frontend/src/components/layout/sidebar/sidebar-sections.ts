@@ -1,4 +1,4 @@
-import {Home, Newspaper, Users, CalendarDays, LineChart, Swords, BrainCircuit, Radar, Shield, Palette, BookOpenText, ChevronsLeftRightEllipsis } from "lucide-react";
+import {Home, Newspaper, Users, CalendarDays, Trophy, Swords, BrainCircuit, Radar, Shield, Palette, BookOpenText, ChevronsLeftRightEllipsis } from "lucide-react";
 
 import type { SidebarSection } from "./types";
 
@@ -39,10 +39,9 @@ export const SECTIONS: SidebarSection[] = [
         badge: "New",
       },
       {
-        href: "/analytics",
-        label: "Analytics",
-        icon: LineChart,
-        badge: "Soon",
+        href: "/leagues",
+        label: "Leagues",
+        icon: Trophy,
       },
     ],
   },

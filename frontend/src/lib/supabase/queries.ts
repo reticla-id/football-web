@@ -288,7 +288,6 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
       "position,total,type_id,season_name,league_name,player,participant",
       {
         type_id: "eq.208",
-        limit: 30,
         order: "total.desc",
       }
     ),
@@ -297,7 +296,6 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
       "position,total,type_id,season_name,league_name,player,participant",
       {
         type_id: "eq.209",
-        limit: 30,
         order: "total.desc",
       }
     ),
@@ -306,7 +304,6 @@ export async function getDashboardData(): Promise<QueryResult<DashboardStats>> {
       "position,total,type_id,season_name,league_name,player,participant",
       {
         type_id: "eq.83",
-        limit: 30,
         order: "total.desc",
       }
     ),
@@ -696,6 +693,8 @@ export async function getFixtures(): Promise<QueryResult<Fixture[]>> {
       starting_at,
       state_id,
       round_name,
+      season_id,
+      season_name,
       venue_name,
       league,
       home,

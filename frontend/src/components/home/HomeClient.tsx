@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ArrowRight,
   BarChart3,
@@ -57,6 +57,7 @@ export default function HomeClient() {
         season: "",
       }).season
   );
+  const [currentTimestamp] = useState(() => Date.now());
 
   useEffect(() => {
     const loadData = async () => {
@@ -127,6 +128,14 @@ export default function HomeClient() {
   }, [filterSource]);
 
   const defaultLeague = useMemo(() => {
+    const liga1League = leagueOptions.find(
+      (league) => compareValuesAsc(league, "Liga 1") === 0
+    );
+
+    if (liga1League) {
+      return liga1League;
+    }
+
     const leagues = Array.from(seasonsByLeague.keys());
 
     return leagues.sort((leftLeague, rightLeague) => {
@@ -140,7 +149,7 @@ export default function HomeClient() {
 
       return compareValuesAsc(leftLeague, rightLeague);
     })[0] ?? "";
-  }, [seasonsByLeague]);
+  }, [leagueOptions, seasonsByLeague]);
 
   const effectiveLeague = useMemo(
     () => (leagueOptions.includes(selectedLeague) ? selectedLeague : defaultLeague),
@@ -220,6 +229,18 @@ export default function HomeClient() {
     };
   }, [dashboardData, effectiveLeague, effectiveSeason, filteredStandings]);
 
+  const fixtureFilterContext = useMemo(() => {
+    const matchedStanding = filteredStandings[0];
+    const matchedLeagueStats = (dashboardData?.leagueStats ?? []).find(
+      (row) => row.league === effectiveLeague && row.season === effectiveSeason
+    );
+
+    return {
+      leagueId: matchedStanding?.leagueId ?? matchedLeagueStats?.leagueId ?? null,
+      seasonId: matchedStanding?.seasonId ?? matchedLeagueStats?.seasonId ?? null,
+    };
+  }, [dashboardData, effectiveLeague, effectiveSeason, filteredStandings]);
+
   const summaryStats = useMemo(
     () => [
       {
@@ -278,7 +299,51 @@ export default function HomeClient() {
     [filteredTopAssists]
   );
 
-  const recentFixtures = useMemo(() => fixtures.slice(0, 5), [fixtures]);
+  const filteredFixtures = useMemo(() => {
+    const normalizedLeague = normalizeFilterValue(effectiveLeague);
+    const normalizedSeason = normalizeFilterValue(effectiveSeason);
+
+    const matchesLeague = (fixture: Fixture) =>
+      (fixtureFilterContext.leagueId !== null &&
+        fixture.league.id === fixtureFilterContext.leagueId) ||
+      normalizeFilterValue(fixture.league.name) === normalizedLeague;
+
+    const matchesSeason = (fixture: Fixture) =>
+      (fixtureFilterContext.seasonId !== null &&
+        fixture.season_id === fixtureFilterContext.seasonId) ||
+      normalizeFilterValue(fixture.season_name) === normalizedSeason;
+
+    const exactMatches = fixtures.filter(
+      (fixture) => matchesLeague(fixture) && matchesSeason(fixture)
+    );
+
+    if (exactMatches.length > 0) {
+      return exactMatches;
+    }
+
+    return fixtures.filter(matchesLeague);
+  }, [effectiveLeague, effectiveSeason, fixtureFilterContext, fixtures]);
+
+  const recentFixtures = useMemo(() => {
+    const upcoming = filteredFixtures
+      .filter((fixture) => new Date(fixture.starting_at).getTime() > currentTimestamp)
+      .sort(
+        (leftFixture, rightFixture) =>
+          new Date(leftFixture.starting_at).getTime() -
+          new Date(rightFixture.starting_at).getTime()
+      );
+    const finished = filteredFixtures
+      .filter((fixture) => new Date(fixture.starting_at).getTime() <= currentTimestamp)
+      .sort(
+        (leftFixture, rightFixture) =>
+          new Date(rightFixture.starting_at).getTime() -
+          new Date(leftFixture.starting_at).getTime()
+      );
+
+    return [...upcoming, ...finished].slice(0, 5);
+  }, [currentTimestamp, filteredFixtures]);
+
+  const dashboardFilterKey = `${effectiveLeague}-${effectiveSeason}`;
 
   return (
     <div className="min-h-screen overflow-x-hidden bg-transparent">
@@ -315,6 +380,18 @@ export default function HomeClient() {
                 <p className="mt-2 text-sm text-zinc-400">
                   Narrow standings and league leaderboards by competition and season.
                 </p>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={dashboardFilterKey}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.18, ease: "easeOut" }}
+                    className="mt-3 text-[11px] uppercase tracking-[0.2em] text-zinc-500"
+                  >
+                    Active: {effectiveLeague} · {effectiveSeason}
+                  </motion.p>
+                </AnimatePresence>
               </div>
 
               <div className="flex flex-col gap-3 sm:flex-row">
@@ -378,20 +455,41 @@ export default function HomeClient() {
               </Link>
             </div>
 
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-              {recentFixtures.map((fixture) => (
-                <Link
-                  key={fixture.id}
-                  href={`/fixtures/${slugify(fixture.league.name)}/${buildFixtureSlug(fixture)}`}
-                  className="block"
-                >
-                  <FixtureCard fixture={fixture} />
-                </Link>
-              ))}
-            </div>
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`fixtures-${dashboardFilterKey}`}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+                className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+              >
+                {recentFixtures.length > 0 ? (
+                  recentFixtures.map((fixture) => (
+                    <Link
+                      key={fixture.id}
+                      href={`/fixtures/${slugify(fixture.league.name)}/${buildFixtureSlug(fixture)}`}
+                      className="block"
+                    >
+                      <FixtureCard fixture={fixture} />
+                    </Link>
+                  ))
+                ) : (
+                  <div className="border border-dashed border-zinc-800 bg-zinc-950/50 px-5 py-8 text-sm text-zinc-400 xl:col-span-5">
+                    No fixtures are available yet for {effectiveLeague} in {effectiveSeason}.
+                  </div>
+                )}
+              </motion.div>
+            </AnimatePresence>
           </section>
 
-          <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <motion.section
+            key={`summary-${dashboardFilterKey}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
+          >
             {isLoading
               ? Array.from({ length: 4 }).map((_, index) => <StatSkeleton key={index} />)
               : summaryStats.map((stat) => {
@@ -417,7 +515,7 @@ export default function HomeClient() {
                     </Card>
                   );
                 })}
-          </section>
+          </motion.section>
 
           {error ? (
             <div className="-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
@@ -452,7 +550,7 @@ export default function HomeClient() {
                       </div>
 
                       <Link
-                        href="/league"
+                        href="/leagues"
                         className="hover-accent-text accent-text inline-flex items-center gap-2 text-sm font-medium transition"
                       >
                         Open league
@@ -481,12 +579,6 @@ export default function HomeClient() {
                     emptyMessage="No assist leaders available yet."
                   />
 
-                  {/* <LeaderboardTable
-                    title="Top red cards"
-                    description="Disciplinary leaders in the selected campaign"
-                    rows={topRedcardsRows}
-                    emptyMessage="No red card leaders available yet."
-                  /> */}
                 </div>
               </section>
 
@@ -584,15 +676,17 @@ export default function HomeClient() {
 }
 
 function buildFixtureSlug(fixture: Fixture): string {
-  return `${slugify(fixture.home.name)}-vs-${slugify(fixture.away.name)}-${fixture.id}`;
+  return `${slugify(fixture.home.name, "home")}-vs-${slugify(fixture.away.name, "away")}-${fixture.id}`;
 }
 
-function slugify(value: string): string {
-  return value
+function slugify(value: string | null | undefined, fallback = "item"): string {
+  const normalizedValue = String(value ?? "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+  return normalizedValue || fallback;
 }
 
 function compareValuesAsc(a: string, b: string) {
@@ -604,4 +698,8 @@ function compareValuesAsc(a: string, b: string) {
 
 function compareValuesDesc(a: string, b: string) {
   return compareValuesAsc(b, a);
+}
+
+function normalizeFilterValue(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
 }

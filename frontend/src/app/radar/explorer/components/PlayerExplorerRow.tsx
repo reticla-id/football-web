@@ -37,7 +37,7 @@ export default function PlayerExplorerRow({
 
   return (
     <div
-      className={`grid grid-cols-1 ${rowGridClassName} items-center gap-3 border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75`}
+      className={`grid grid-cols-1 ${rowGridClassName} items-start gap-3 border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75 md:items-center`}
     >
       <motion.button
         type="button"
@@ -99,7 +99,7 @@ export default function PlayerExplorerRow({
         </div>
       </motion.button>
 
-      <div className="mt-3 flex justify-end md:mt-0">
+      <div className="mt-1 flex justify-end pr-1 sm:pr-0 md:mt-0 md:justify-center md:pr-0">
         {rowAction ? (
           <motion.button
             type="button"
@@ -108,8 +108,8 @@ export default function PlayerExplorerRow({
             transition={{ duration: 0.16, ease: "easeOut" }}
             className={
               rowAction.tone === "danger"
-                ? "flex h-8 w-8 cursor-pointer items-center justify-center text-rose-500 transition-[opacity,filter,color] duration-200 hover:brightness-110 hover:opacity-80"
-                : "accent-text flex h-8 w-8 cursor-pointer items-center justify-center transition-[opacity,filter,color] duration-200 hover:brightness-110 hover:opacity-80"
+                ? "flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center text-rose-500 transition-[opacity,filter,color] duration-200 hover:brightness-110 hover:opacity-80"
+                : "accent-text flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center transition-[opacity,filter,color] duration-200 hover:brightness-110 hover:opacity-80"
             }
             title={rowAction.title}
             aria-label={`${rowAction.label} ${player.display_name}`}
@@ -142,7 +142,7 @@ export default function PlayerExplorerRow({
                 {detailStats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="px-3 py-3"
+                    className="border border-zinc-800/60 bg-zinc-950/55 px-3 py-3 xl:border-0 xl:bg-transparent"
                   >
                     <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
                       {stat.label}
@@ -152,10 +152,10 @@ export default function PlayerExplorerRow({
                 ))}
               </div>
 
-              <div className="mt-4 flex justify-end">
+              <div className="mt-4 flex justify-stretch sm:justify-end">
                 <Link
                   href={`/players/${player.slug}`}
-                  className="accent-text inline-flex items-center gap-2 text-sm font-medium transition hover:text-white"
+                  className="accent-text inline-flex w-full items-center justify-center gap-2 border border-zinc-800 bg-zinc-950/60 px-4 py-2 text-sm font-medium transition hover:border-zinc-700 hover:text-white sm:w-auto sm:justify-end sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
                 >
                   View Player
                   <ArrowRight className="h-4 w-4" />

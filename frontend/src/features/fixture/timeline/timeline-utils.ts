@@ -122,8 +122,8 @@ function buildParticipantSideMap(events: FixtureTimelineEvent[], fixture: TeamFi
 
     if (participantId != null && !participantMap.has(participantId)) {
       const participantName = event.participant?.name?.trim().toLowerCase() ?? "";
-      const homeName = fixture.home.name.trim().toLowerCase();
-      const awayName = fixture.away.name.trim().toLowerCase();
+      const homeName = fixture.home.name?.trim().toLowerCase() ?? "";
+      const awayName = fixture.away.name?.trim().toLowerCase() ?? "";
 
       if (participantName && participantName === homeName) {
         participantMap.set(participantId, "home");

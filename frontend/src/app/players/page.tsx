@@ -24,7 +24,7 @@ export default function PlayersPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [leagueFilter, setLeagueFilter] = useState("All");
+  const [leagueFilter, setLeagueFilter] = useState("");
   const [clubFilter, setClubFilter] = useState("All");
   const [positionFilter, setPositionFilter] = useState("All");
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,24 +50,42 @@ export default function PlayersPage() {
   }, []);
 
   const leagues = useMemo(
-    () => [
-      "All",
-      ...Array.from(
+    () =>
+      Array.from(
         new Set(
           players
             .map((player) => player.league_name?.trim())
             .filter((value): value is string => Boolean(value))
         )
       ).sort((a, b) => a.localeCompare(b)),
-    ],
     [players]
   );
 
+  const defaultLeague = useMemo(() => {
+    const liga1League = leagues.find(
+      (league) => league.localeCompare("Liga 1", undefined, { sensitivity: "base" }) === 0
+    );
+
+    return liga1League ?? leagues[0] ?? "";
+  }, [leagues]);
+
+  const effectiveLeagueFilter = useMemo(
+    () => (leagues.includes(leagueFilter) ? leagueFilter : defaultLeague),
+    [defaultLeague, leagueFilter, leagues]
+  );
+
+  useEffect(() => {
+    if (!effectiveLeagueFilter || leagueFilter === effectiveLeagueFilter) {
+      return;
+    }
+
+    setLeagueFilter(effectiveLeagueFilter);
+  }, [effectiveLeagueFilter, leagueFilter]);
+
   const clubs = useMemo(() => {
-    const visiblePlayers =
-      leagueFilter === "All"
-        ? players
-        : players.filter((player) => player.league_name === leagueFilter);
+    const visiblePlayers = effectiveLeagueFilter
+      ? players.filter((player) => player.league_name === effectiveLeagueFilter)
+      : players;
 
     return [
       "All",
@@ -79,7 +97,7 @@ export default function PlayersPage() {
         )
       ).sort((a, b) => a.localeCompare(b)),
     ];
-  }, [leagueFilter, players]);
+  }, [effectiveLeagueFilter, players]);
 
   const positions = useMemo(
     () => [
@@ -117,14 +135,15 @@ export default function PlayersPage() {
         position.toLowerCase().includes(keyword) ||
         (player.nationality ?? "").toLowerCase().includes(keyword);
 
-      const matchesLeague = leagueFilter === "All" || player.league_name === leagueFilter;
+      const matchesLeague =
+        effectiveLeagueFilter === "" || player.league_name === effectiveLeagueFilter;
       const matchesClub =
         effectiveClubFilter === "All" || player.team_name === effectiveClubFilter;
       const matchesPosition = positionFilter === "All" || position === positionFilter;
 
       return matchesSearch && matchesLeague && matchesClub && matchesPosition;
     });
-  }, [players, search, leagueFilter, effectiveClubFilter, positionFilter]);
+  }, [players, search, effectiveLeagueFilter, effectiveClubFilter, positionFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPlayers.length / ITEMS_PER_PAGE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -171,7 +190,7 @@ export default function PlayersPage() {
             </div>
 
             <Select
-              value={leagueFilter}
+              value={effectiveLeagueFilter}
               onValueChange={(value) => {
                 setLeagueFilter(value);
                 setClubFilter("All");
@@ -179,7 +198,7 @@ export default function PlayersPage() {
               }}
             >
               <SelectTrigger>
-                <LabeledSelectValue label="League" placeholder="All" />
+                <LabeledSelectValue label="League" placeholder="League" />
               </SelectTrigger>
 
               <SelectContent>

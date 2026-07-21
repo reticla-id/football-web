@@ -35,16 +35,14 @@ interface Props {
 const PAGE_SIZE = 10;
 
 export default function LeagueFixturesClient({ league, seasons, clubs }: Props) {
-  const [season, setSeason] = useState("all");
+  const [season, setSeason] = useState(seasons[0]?.name ?? "");
   const [club, setClub] = useState("all");
   const [fixtures, setFixtures] = useState<TeamFixture[]>([]);
-  const [upcomingOffset, setUpcomingOffset] = useState(0);
-  const [finishedOffset, setFinishedOffset] = useState(0);
-  const [phase, setPhase] = useState<"upcoming" | "finished" | "done">("upcoming");
   const [hasMore, setHasMore] = useState(true);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentTimestamp] = useState(() => Date.now());
 
   const loaderRef = useRef<HTMLDivElement>(null);
   const loadingRef = useRef(false);
@@ -52,9 +50,16 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
   const finishedOffsetRef = useRef(0);
   const phaseRef = useRef<"upcoming" | "finished" | "done">("upcoming");
 
+  const effectiveSeason = useMemo(() => {
+    if (seasons.some((seasonOption) => seasonOption.name === season)) {
+      return season;
+    }
+
+    return seasons[0]?.name ?? "";
+  }, [season, seasons]);
   const selectedSeasonId = useMemo(
-    () => (season === "all" ? undefined : Number(season)),
-    [season]
+    () => seasons.find((seasonOption) => seasonOption.name === effectiveSeason)?.id,
+    [effectiveSeason, seasons]
   );
   const selectedClubId = useMemo(
     () => (club === "all" ? undefined : Number(club)),
@@ -137,9 +142,6 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
 
       setError(null);
       setFixtures((prev) => (reset ? nextFixtures : [...prev, ...nextFixtures]));
-      setUpcomingOffset(nextUpcomingOffset);
-      setFinishedOffset(nextFinishedOffset);
-      setPhase(nextPhase);
       upcomingOffsetRef.current = nextUpcomingOffset;
       finishedOffsetRef.current = nextFinishedOffset;
       phaseRef.current = nextPhase;
@@ -156,13 +158,10 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
     upcomingOffsetRef.current = 0;
     finishedOffsetRef.current = 0;
     phaseRef.current = "upcoming";
-    setUpcomingOffset(0);
-    setFinishedOffset(0);
-    setPhase("upcoming");
     setHasMore(true);
     setFixtures([]);
     void loadNextPage(true);
-  }, [loadNextPage, season, club]);
+  }, [club, effectiveSeason, loadNextPage]);
 
   useEffect(() => {
     if (!hasMore) {
@@ -189,7 +188,7 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
   const fixtureCards = useMemo(
     () =>
       fixtures.map((fixture) => {
-        const isUpcoming = new Date(fixture.starting_at).getTime() > Date.now();
+        const isUpcoming = new Date(fixture.starting_at).getTime() > currentTimestamp;
 
         return (
           <Link
@@ -210,7 +209,7 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
           </Link>
         );
       }),
-    [fixtures, league.slug]
+    [currentTimestamp, fixtures, league.slug]
   );
 
   return (
@@ -252,14 +251,13 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Select value={season} onValueChange={setSeason}>
+          <Select value={effectiveSeason} onValueChange={setSeason}>
             <SelectTrigger className="w-full sm:w-[180px]">
               <SelectValue placeholder="Season" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Seasons</SelectItem>
               {seasons.map((seasonOption) => (
-                <SelectItem key={seasonOption.id} value={String(seasonOption.id)}>
+                <SelectItem key={seasonOption.id} value={seasonOption.name}>
                   {seasonOption.name}
                 </SelectItem>
               ))}
@@ -305,10 +303,20 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
 }
 
 function buildFixtureSlug(fixture: TeamFixture): string {
-  const home = fixture.home.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-  const away = fixture.away.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+  const home = slugify(fixture.home.name, "home");
+  const away = slugify(fixture.away.name, "away");
 
   return `${home}-vs-${away}-${fixture.id}`;
+}
+
+function slugify(value: string | null | undefined, fallback = "item") {
+  const normalizedValue = String(value ?? "")
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
+  return normalizedValue || fallback;
 }
 
 function FixtureSkeletonList({ compact = false }: { compact?: boolean }) {

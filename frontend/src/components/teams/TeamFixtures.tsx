@@ -185,7 +185,7 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
         <div className="space-y-4">
           {items.map((fixture) => {
             const isUpcoming = new Date(fixture.starting_at).getTime() > Date.now();
-            const href = `/fixtures/${slugify(fixture.league.name)}/${buildFixtureSlug(fixture)}`;
+            const href = `/fixtures/${slugify(fixture.league.name, "league")}/${buildFixtureSlug(fixture)}`;
 
             return (
               <Link key={fixture.id} href={href} className="block">
@@ -252,16 +252,18 @@ function FixtureSkeletonGrid({ compact = false }: { compact?: boolean }) {
 }
 
 function buildFixtureSlug(fixture: TeamFixture): string {
-  const home = slugify(fixture.home.name);
-  const away = slugify(fixture.away.name);
+  const home = slugify(fixture.home.name, "home");
+  const away = slugify(fixture.away.name, "away");
 
   return `${home}-vs-${away}-${fixture.id}`;
 }
 
-function slugify(value: string): string {
-  return value
+function slugify(value: string | null | undefined, fallback = "item"): string {
+  const normalizedValue = String(value ?? "")
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/(^-|-$)/g, "");
+
+  return normalizedValue || fallback;
 }

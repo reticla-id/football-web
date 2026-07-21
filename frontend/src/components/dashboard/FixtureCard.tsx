@@ -12,35 +12,33 @@ export default function FixtureCard({ fixture }: Props) {
   const kickoff = new Date(fixture.starting_at);
   const homeCode = fixture.home.short_code || fixture.home.name;
   const awayCode = fixture.away.short_code || fixture.away.name;
+  const leagueName = fixture.league.name || "League";
+  const leagueImage = fixture.league.image_path || "/placeholder-club.png";
+  const roundName = fixture.round_name || "-";
 
   return (
     <div className="w-full shrink-0 overflow-hidden -[24px] border border-zinc-800/80 bg-[linear-gradient(180deg,rgba(24,24,24,0.94),rgba(10,10,10,0.96))] transition-all duration-200 hover:-translate-y-1 hover:border-zinc-700 hover:shadow-[0_18px_45px_rgba(0,0,0,0.22)]">
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-zinc-800/80 bg-zinc-950/70 px-4 py-3">
-        {/* LEFT */}
-        <div className="justify-self-start">
-          <img 
-            src={fixture.league.image_path}
-            alt={fixture.league.name}
-            className="h-8 w-8 object-contain"
-          />
-        </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-start gap-3 border-b border-zinc-800/80 bg-zinc-950/70 px-4 py-3">
+        <div />
 
-        {/* CENTER */}
-        <div className="justify-self-center text-center">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-            Match Week
-          </p>
+        <div className="min-w-0 justify-self-center text-center">
+          <div className="inline-flex max-w-full items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+            <img
+              src={leagueImage}
+              alt={leagueName}
+              className="h-3.5 w-3.5 shrink-0 object-contain"
+            />
+            <span className="truncate">Match Week</span>
+          </div>
 
-          <p className="mt-1 text-xs font-semibold uppercase tracking-[0.16em] text-zinc-300">
-            {fixture.round_name}
+          <p className="mt-1 truncate text-[11px] font-semibold uppercase tracking-[0.14em] text-zinc-300 sm:text-xs">
+            {roundName}
           </p>
         </div>
 
-        {/* RIGHT */}
-        <span className="justify-self-end px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.24em] text-grey">
+        <span className="justify-self-end shrink-0 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-grey sm:px-3 sm:py-1">
           FT
         </span>
-
       </div>
 
       <div className="space-y-4 px-4 py-5">

@@ -44,6 +44,8 @@ export interface Fixture {
     starting_at:string;
     state_id:number;
     round_name: string;
+    season_id?: number | null;
+    season_name?: string | null;
 
     league:{
         id:number;

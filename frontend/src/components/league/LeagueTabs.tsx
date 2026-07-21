@@ -6,10 +6,9 @@ import { cn } from "@/lib/utils";
 
 export type LeagueTab =
   | "standings"
-  | "top-scorers"
-  | "top-assists"
-  | "most-red-cards"
+  | "leaderboards"
   | "team-statistics"
+  | "analytics"
   | "fixtures";
 
 interface Props {
@@ -19,10 +18,9 @@ interface Props {
 
 const tabs: Array<{ key: LeagueTab; label: string }> = [
   { key: "standings", label: "Standings" },
-  { key: "top-scorers", label: "Top Scorers" },
-  { key: "top-assists", label: "Top Assists" },
-  { key: "most-red-cards", label: "Most Red Cards" },
+  { key: "leaderboards", label: "Leaderboards" },
   { key: "team-statistics", label: "Team Statistics" },
+  { key: "analytics", label: "Analytics" },
   { key: "fixtures", label: "Fixtures" },
 ];
 
@@ -30,7 +28,7 @@ export default function LeagueTabs({ activeTab, onTabChange }: Props) {
   return (
     <div className="overflow-hidden border border-zinc-800/80 bg-zinc-900/70">
       <div
-        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6"
+        className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5"
         role="tablist"
         aria-label="League sections"
       >

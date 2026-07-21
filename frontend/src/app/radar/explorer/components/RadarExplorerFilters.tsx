@@ -112,7 +112,7 @@ export default function RadarExplorerFilters({
             <Button
               type="button"
               variant="outline"
-              className="h-8 px-2.5 !text-[10px] uppercase tracking-[0.16em]"
+              className="h-8 gap-2 px-2.5 !text-[10px] uppercase tracking-[0.16em]"
               onClick={() =>
                 onFiltersChange({
                   ...defaultFilters,
@@ -204,6 +204,7 @@ export default function RadarExplorerFilters({
                 values={filters.league}
                 onChange={(value) => onFiltersChange({ ...filters, league: value })}
                 options={leagueOptions}
+                allowClearAll={false}
               />
               <MultiSelectField
                 label="Status"
@@ -313,17 +314,21 @@ function MultiSelectField({
   values,
   onChange,
   options,
+  allowClearAll = true,
 }: {
   label: string;
   values: string[];
   onChange: (value: string[]) => void;
   options: string[];
+  allowClearAll?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const cleanOptions = options.filter(Boolean);
   const summary =
     values.length === 0
-      ? "All"
+      ? allowClearAll
+        ? "All"
+        : "Select"
       : values.length === 1
         ? values[0]
         : `${values.length} selected`;
@@ -360,17 +365,19 @@ function MultiSelectField({
 
       {open ? (
         <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 border border-zinc-800 bg-zinc-950/98 p-1 shadow-[0_22px_60px_rgba(0,0,0,0.4)]">
-          <button
-            type="button"
-            onClick={() => onChange([])}
-            className={cn(
-              "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-zinc-900 hover:text-white",
-              values.length === 0 && "accent-bg-soft accent-text"
-            )}
-          >
-            <span>All</span>
-            {values.length === 0 ? <Check className="h-4 w-4" /> : null}
-          </button>
+          {allowClearAll ? (
+            <button
+              type="button"
+              onClick={() => onChange([])}
+              className={cn(
+                "flex w-full items-center justify-between px-3 py-2.5 text-left text-sm transition-colors hover:bg-zinc-900 hover:text-white",
+                values.length === 0 && "accent-bg-soft accent-text"
+              )}
+            >
+              <span>All</span>
+              {values.length === 0 ? <Check className="h-4 w-4" /> : null}
+            </button>
+          ) : null}
 
           {cleanOptions.map((option) => {
             const active = values.includes(option);

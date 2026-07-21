@@ -167,8 +167,8 @@ export function StandingsTable({ standings }: { standings: StandingRow[] }) {
 export function FullStandingsTable({ standings }: { standings: StandingRow[] }) {
   return (
     <div className="overflow-hidden border border-zinc-800 bg-[linear-gradient(180deg,rgba(24,24,24,0.9),rgba(13,13,13,0.92))]">
-      <div className="overflow-x-auto">
-        <table className="w-full border-collapse text-sm">
+      <div className="overflow-x-auto overscroll-x-contain">
+        <table className="min-w-[820px] w-full border-collapse text-sm lg:min-w-0">
           <thead className="border-b border-zinc-800 bg-zinc-950 text-xs uppercase tracking-wide text-zinc-500">
             <tr>
               <th className="w-12 py-3 text-center font-medium">Pos</th>

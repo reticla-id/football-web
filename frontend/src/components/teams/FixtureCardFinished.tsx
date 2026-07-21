@@ -8,22 +8,27 @@ interface Props {
 
 export default function FixtureCardFinished({ fixture }: Props) {
   const kickoff = new Date(fixture.starting_at);
+  const roundLabel = formatRoundLabel(fixture.round_name);
 
   return (
     <article className="border border-zinc-800/80 bg-[linear-gradient(180deg,rgba(20,20,20,0.96),rgba(10,10,10,0.96))] px-4 py-3 transition-colors duration-200 hover:border-zinc-600 sm:px-5">
-      <div className="relative space-y-2.5">
-        {/* League Logo */}
-        <div className="absolute left-0 top-0">
-          <img
-            src={fixture.league.image_path ?? "/placeholder-club.png"}
-            alt={fixture.league.name}
-            className="h-12 w-12 object-contain"
-          />
-        </div>
+      <div className="space-y-2.5">
+        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+          <div />
 
-        <p className="text-center text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
-          Match Week {fixture.round_name}
-        </p>
+          <div className="min-w-0 justify-self-center text-center">
+            <div className="inline-flex max-w-full items-center justify-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-zinc-500">
+              <img
+                src={fixture.league.image_path ?? "/placeholder-club.png"}
+                alt={fixture.league.name}
+                className="h-3.5 w-3.5 shrink-0 object-contain"
+              />
+              <span className="truncate">{roundLabel}</span>
+            </div>
+          </div>
+
+          <div />
+        </div>
 
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3">
           <FinishedParticipant
@@ -67,6 +72,24 @@ export default function FixtureCardFinished({ fixture }: Props) {
       </div>
     </article>
   );
+}
+
+function formatRoundLabel(roundName: string | null) {
+  const normalizedRoundName = String(roundName ?? "").trim();
+
+  if (!normalizedRoundName) {
+    return "Match Week -";
+  }
+
+  if (normalizedRoundName.toLowerCase().includes("match week")) {
+    return normalizedRoundName;
+  }
+
+  if (/^\d+$/.test(normalizedRoundName)) {
+    return `Match Week ${normalizedRoundName}`;
+  }
+
+  return normalizedRoundName;
 }
 
 function FinishedParticipant({

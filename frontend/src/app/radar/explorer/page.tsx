@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import type { LucideIcon } from "lucide-react";
 import { SearchX } from "lucide-react";
@@ -32,6 +32,10 @@ import type { ShortlistCollection, ShortlistPlayer } from "@/lib/supabase/types"
 
 const PAGE_SIZE = 25;
 const EXPLORER_STORAGE_KEY = "radar-explorer-state-v1";
+const defaultSortState: ExplorerSortState = {
+  column: null,
+  direction: null,
+};
 
 type FiltersState = {
   search: string;
@@ -76,28 +80,77 @@ const defaultFilters: FiltersState = {
   traits: [],
   playstyles: [],
 };
+const defaultStoredExplorerState = {
+  filters: defaultFilters,
+  currentPage: 1,
+  sortState: defaultSortState,
+};
+
+type ExplorerPersistedState = {
+  filters: FiltersState;
+  currentPage: number;
+  sortState: ExplorerSortState;
+  hasRestoredPersistedState: boolean;
+};
+
+type ExplorerPersistedAction =
+  | {
+      type: "restore";
+      payload: {
+        filters: FiltersState;
+        currentPage: number;
+        sortState: ExplorerSortState;
+      };
+    }
+  | { type: "setFilters"; payload: FiltersState }
+  | { type: "setCurrentPage"; payload: number }
+  | { type: "setSortState"; payload: ExplorerSortState };
+
+function explorerPersistedStateReducer(
+  state: ExplorerPersistedState,
+  action: ExplorerPersistedAction
+) {
+  switch (action.type) {
+    case "restore":
+      return {
+        ...state,
+        filters: action.payload.filters,
+        currentPage: action.payload.currentPage,
+        sortState: action.payload.sortState,
+        hasRestoredPersistedState: true,
+      };
+    case "setFilters":
+      return {
+        ...state,
+        filters: action.payload,
+      };
+    case "setCurrentPage":
+      return {
+        ...state,
+        currentPage: action.payload,
+      };
+    case "setSortState":
+      return {
+        ...state,
+        sortState: action.payload,
+      };
+    default:
+      return state;
+  }
+}
 
 export default function RadarExplorerPage() {
-  const storedExplorerState = readStoredState(EXPLORER_STORAGE_KEY, {
-    filters: defaultFilters,
-    currentPage: 1,
-    sortState: {
-      column: null,
-      direction: null,
-    } satisfies ExplorerSortState,
-  });
   const [players, setPlayers] = useState<ExplorerPlayer[]>([]);
   const [collections, setCollections] = useState<ShortlistCollection[]>([]);
   const [shortlistLinks, setShortlistLinks] = useState<ShortlistPlayer[]>([]);
-  const [filters, setFilters] = useState<FiltersState>(() =>
-    ({
-      ...defaultFilters,
-      ...storedExplorerState.filters,
-    })
-  );
-  const [currentPage, setCurrentPage] = useState(() => storedExplorerState.currentPage);
-  const [sortState, setSortState] = useState<ExplorerSortState>(
-    () => storedExplorerState.sortState
+  const [persistedState, dispatchPersistedState] = useReducer(
+    explorerPersistedStateReducer,
+    {
+      filters: defaultFilters,
+      currentPage: 1,
+      sortState: defaultSortState,
+      hasRestoredPersistedState: false,
+    }
   );
   const [isLoading, setIsLoading] = useState(true);
   const [isPickerOpen, setIsPickerOpen] = useState(false);
@@ -106,6 +159,26 @@ export default function RadarExplorerPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [expandedPlayerId, setExpandedPlayerId] = useState<number | null>(null);
+  const { filters, currentPage, sortState, hasRestoredPersistedState } = persistedState;
+
+  useEffect(() => {
+    const storedExplorerState = readStoredState(
+      EXPLORER_STORAGE_KEY,
+      defaultStoredExplorerState
+    );
+
+    dispatchPersistedState({
+      type: "restore",
+      payload: {
+        filters: {
+          ...defaultFilters,
+          ...storedExplorerState.filters,
+        },
+        currentPage: storedExplorerState.currentPage ?? 1,
+        sortState: storedExplorerState.sortState ?? defaultSortState,
+      },
+    });
+  }, []);
 
   useEffect(() => {
     const loadPlayers = async () => {
@@ -229,6 +302,23 @@ export default function RadarExplorerPage() {
     );
   }, [availableLeagues, filters.country, players]);
 
+  useEffect(() => {
+    if (!hasRestoredPersistedState || leagueOptions.length === 0 || filters.league.length > 0) {
+      return;
+    }
+
+    const defaultLeague = getDefaultExplorerLeague(leagueOptions);
+
+    dispatchPersistedState({
+      type: "setFilters",
+      payload: {
+        ...filters,
+        league: defaultLeague ? [defaultLeague] : [],
+      },
+    });
+    dispatchPersistedState({ type: "setCurrentPage", payload: 1 });
+  }, [filters, hasRestoredPersistedState, leagueOptions]);
+
   const filteredPlayers = useMemo(() => {
     const keyword = filters.search.trim().toLowerCase();
 
@@ -325,12 +415,16 @@ export default function RadarExplorerPage() {
   };
 
   useEffect(() => {
+    if (!hasRestoredPersistedState) {
+      return;
+    }
+
     writeStoredState(EXPLORER_STORAGE_KEY, {
       filters,
       currentPage,
       sortState,
     });
-  }, [currentPage, filters, sortState]);
+  }, [currentPage, filters, hasRestoredPersistedState, sortState]);
 
   useEffect(() => {
     if (!toastMessage) {
@@ -350,20 +444,25 @@ export default function RadarExplorerPage() {
   };
 
   const handleSortChange = (column: ExplorerSortColumn) => {
-    setSortState((current) => {
-      if (current.column !== column) {
+    dispatchPersistedState({
+      type: "setSortState",
+      payload: (() => {
+        const current = sortState;
+
+        if (current.column !== column) {
+          return { column, direction: "asc" };
+        }
+
+        if (current.direction === "asc") {
+          return { column, direction: "desc" };
+        }
+
+        if (current.direction === "desc") {
+          return { column: null, direction: null };
+        }
+
         return { column, direction: "asc" };
-      }
-
-      if (current.direction === "asc") {
-        return { column, direction: "desc" };
-      }
-
-      if (current.direction === "desc") {
-        return { column: null, direction: null };
-      }
-
-      return { column, direction: "asc" };
+      })(),
     });
   };
 
@@ -378,11 +477,14 @@ export default function RadarExplorerPage() {
       nextFilters.country
     );
 
-    setFilters({
-      ...nextFilters,
-      league: nextFilters.league.filter((value) => nextLeagueOptions.includes(value)),
+    dispatchPersistedState({
+      type: "setFilters",
+      payload: {
+        ...nextFilters,
+        league: nextFilters.league.filter((value) => nextLeagueOptions.includes(value)),
+      },
     });
-    setCurrentPage(1);
+    dispatchPersistedState({ type: "setCurrentPage", payload: 1 });
   };
 
   const handleAddPlayerToCollection = async (collection: ShortlistCollection) => {
@@ -470,7 +572,9 @@ export default function RadarExplorerPage() {
               totalPages={totalPages}
               totalItems={sortedPlayers.length}
               pageSize={PAGE_SIZE}
-              onPageChange={setCurrentPage}
+              onPageChange={(page) =>
+                dispatchPersistedState({ type: "setCurrentPage", payload: page })
+              }
             />
           </div>
         </div>
@@ -536,4 +640,12 @@ function getLeagueOptionsForCountries(
       )
       .map((player) => player.league)
   );
+}
+
+function getDefaultExplorerLeague(leagueOptions: string[]) {
+  const liga1League = leagueOptions.find(
+    (league) => league.localeCompare("Liga 1", undefined, { sensitivity: "base" }) === 0
+  );
+
+  return liga1League ?? leagueOptions[0] ?? "";
 }
