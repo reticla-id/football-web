@@ -387,9 +387,9 @@ export default function HomeClient() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.18, ease: "easeOut" }}
-                    className="mt-3 text-[11px] uppercase tracking-[0.2em] text-zinc-500"
+                    className="accent-text mt-3 text-[11px] uppercase tracking-[0.2em]"
                   >
-                    Active: {effectiveLeague} · {effectiveSeason}
+                    Active: {effectiveLeague} {effectiveSeason}
                   </motion.p>
                 </AnimatePresence>
               </div>

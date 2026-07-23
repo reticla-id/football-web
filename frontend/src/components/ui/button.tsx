@@ -10,11 +10,11 @@ export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElemen
 }
 
 const baseClassName =
-  "focus-accent inline-flex items-center justify-center text-sm font-semibold tracking-[0.02em] transition-all duration-200 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50";
+  "inline-flex items-center justify-center text-sm font-semibold tracking-[0.02em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 disabled:pointer-events-none disabled:opacity-50";
 
 const variants = {
   default:
-    "border-[var(--accent)] bg-[var(--accent)] text-black hover:brightness-110 hover:scale-[1.01] active:scale-[0.99] shadow-[0_10px_30px_color-mix(in_srgb,var(--accent)_35%,transparent)]",
+    "border-[var(--accent)] bg-[var(--accent)] text-black hover:brightness-110 hover:scale-[1.01] active:scale-[0.99]",
 
   outline:
     "border-zinc-700 bg-zinc-950/70 text-zinc-100 hover:border-zinc-500 hover:bg-zinc-900",

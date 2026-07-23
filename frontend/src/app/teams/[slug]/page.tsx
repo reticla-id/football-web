@@ -49,11 +49,17 @@ export default async function TeamDetailPage({ params }: Props) {
     );
   }
 
-  const [squadResult, fixtureResult, fixtureSeasonsResult] = await Promise.all([
+  const [squadResult, fixtureSeasonsResult] = await Promise.all([
     getTeamSquad(team.id),
-    getTeamFixtures(team.id, undefined, 10, 0),
     getTeamFixtureFilters(team.id),
   ]);
+
+  const defaultFixtureSeasonName =
+    fixtureSeasonsResult.data?.[0] != null
+      ? String(fixtureSeasonsResult.data[0].name)
+      : undefined;
+
+  const fixtureResult = await getTeamFixtures(team.id, defaultFixtureSeasonName, 10, 0);
 
   if (squadResult.error || fixtureResult.error || fixtureSeasonsResult.error) {
     return (

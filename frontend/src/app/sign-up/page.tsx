@@ -329,7 +329,7 @@ export default function SignUpPage() {
               ) : null}
 
               <Button
-                className="w-full bg-[var(--accent-secondary)] text-black transition-all duration-200 hover:scale-[1.01] hover:brightness-110 active:scale-[0.99]"
+                className="w-full bg-[var(--accent-secondary)] text-black transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
                 type="submit"
                 disabled={isLoading}
               >

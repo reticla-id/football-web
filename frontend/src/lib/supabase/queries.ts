@@ -1040,7 +1040,7 @@ export async function getTeamFixtureFilters(
 ): Promise<QueryResult<FixtureSeasonOption[]>> {
   const { data, error } = await fetchSupabaseData<Record<string, unknown>>(
     "fixture_table",
-    "season_id",
+    "season_name",
     {
       or: `(home_team_id.eq.${teamId},away_team_id.eq.${teamId})`,
       order: "starting_at.desc",
@@ -1051,15 +1051,21 @@ export async function getTeamFixtureFilters(
     return { data: null, error };
   }
 
-  const seasonIds = Array.from(
+  const seasonNames = Array.from(
     new Set(
       (data ?? [])
-        .map((fixture) => fixture.season_id)
-        .filter((seasonId): seasonId is number => typeof seasonId === "number")
+        .map((fixture) => String(fixture.season_name ?? "").trim())
+        .filter(Boolean)
     )
   );
 
-  return getSeasonOptionsFromIds(seasonIds);
+  return {
+    data: seasonNames.map((seasonName) => ({
+      id: seasonName,
+      name: seasonName,
+    })),
+    error: null,
+  };
 }
 
 export async function getLeagueUpcomingFixtures(
@@ -1162,7 +1168,7 @@ export async function getTeamSquad(
 
 export async function getTeamFixtures(
     teamId: number,
-    seasonId?: number,
+    seasonName?: string,
     limit = 10,
     offset = 0
 ) {
@@ -1173,8 +1179,8 @@ export async function getTeamFixtures(
         offset,
     };
 
-    if (seasonId) {
-        filters.season_id = `eq.${seasonId}`;
+    if (seasonName) {
+        filters.season_name = `eq.${seasonName}`;
     }
 
     return fetchSupabaseData<TeamFixture>(

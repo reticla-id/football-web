@@ -278,7 +278,7 @@ export default function SignInClient({ infoMessage }: SignInClientProps) {
 
               <Button
                 type="submit"
-                className="w-full bg-[var(--accent-secondary)] text-black transition-all duration-200 hover:scale-[1.01] hover:brightness-110 active:scale-[0.99]"
+                className="w-full bg-[var(--accent-secondary)] text-black transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -300,7 +300,7 @@ export default function SignInClient({ infoMessage }: SignInClientProps) {
 
             <p className="text-sm text-zinc-500">
               Don&apos;t have an account?{" "}
-              <Link href="/sign-up" className="accent-secondary font-medium transition hover:text-white">
+              <Link href="" className="accent-secondary font-medium transition hover:text-white">
                 Create one
               </Link>
             </p>

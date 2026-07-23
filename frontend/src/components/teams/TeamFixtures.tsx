@@ -28,7 +28,7 @@ interface Props {
 const PAGE_SIZE = 10;
 
 export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
-  const [season, setSeason] = useState("all");
+  const [season, setSeason] = useState("");
   const [items, setItems] = useState(fixtures);
   const [offset, setOffset] = useState(fixtures.length);
   const [hasMore, setHasMore] = useState(fixtures.length === PAGE_SIZE);
@@ -41,9 +41,9 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
   const firstRenderRef = useRef(true);
   const offsetRef = useRef(fixtures.length);
 
-  const selectedSeasonId = useMemo(
-    () => (season === "all" ? undefined : Number(season)),
-    [season]
+  const effectiveSeason = useMemo(
+    () => (seasons.some((item) => item.name === season) ? season : (seasons[0]?.name ?? "")),
+    [season, seasons]
   );
 
   const loadFixtures = useCallback(
@@ -63,7 +63,7 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
       const currentOffset = reset ? 0 : offsetRef.current;
       const result = await getTeamFixtures(
         teamId,
-        selectedSeasonId,
+        effectiveSeason || undefined,
         PAGE_SIZE,
         currentOffset
       );
@@ -88,7 +88,7 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
       setIsRefreshing(false);
       setIsLoadingMore(false);
     },
-    [selectedSeasonId, teamId]
+    [effectiveSeason, teamId]
   );
 
   useEffect(() => {
@@ -102,7 +102,7 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
     setItems([]);
     setHasMore(true);
     void loadFixtures(true);
-  }, [loadFixtures, season]);
+  }, [effectiveSeason, loadFixtures]);
 
   useEffect(() => {
     if (!hasMore) {
@@ -142,7 +142,7 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
             </p>
           </div>
 
-          <SeasonFilter seasons={seasons} value={season} onChange={setSeason} />
+          <SeasonFilter seasons={seasons} value={effectiveSeason} onChange={setSeason} />
         </div>
 
         <div className="border border-dashed border-zinc-800 bg-zinc-900/60 px-6 py-12 text-center">
@@ -163,14 +163,14 @@ export default function TeamFixtures({ teamId, fixtures, seasons }: Props) {
       className="space-y-5"
     >
       <div className="flex flex-col gap-4 border border-zinc-800/80 bg-zinc-900/70 p-5 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-white">Fixtures</h2>
-          <p className="mt-1 text-sm text-zinc-500">
-            Ordered by most recent match date, with upcoming fixtures below.
+          <div>
+            <h2 className="text-xl font-semibold text-white">Fixtures</h2>
+            <p className="mt-1 text-sm text-zinc-500">
+              Ordered by most recent match date, with upcoming fixtures below.
           </p>
         </div>
 
-        <SeasonFilter seasons={seasons} value={season} onChange={setSeason} />
+        <SeasonFilter seasons={seasons} value={effectiveSeason} onChange={setSeason} />
       </div>
 
       {error ? (
@@ -227,9 +227,8 @@ function SeasonFilter({
       </SelectTrigger>
 
       <SelectContent>
-        <SelectItem value="all">All Seasons</SelectItem>
         {seasons.map((season) => (
-          <SelectItem key={season.id} value={String(season.id)}>
+          <SelectItem key={season.id} value={season.name}>
             {season.name}
           </SelectItem>
         ))}

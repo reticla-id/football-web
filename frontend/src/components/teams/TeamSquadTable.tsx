@@ -14,23 +14,24 @@ interface Props {
 const POSITION_ORDER = ["Goalkeeper", "Defender", "Midfielder", "Attacker"];
 
 export default function TeamSquadTable({ players }: Props) {
-  const [season, setSeason] = useState("All");
-
   const seasons = useMemo(
-    () => [
-      "All",
-      ...Array.from(
-        new Set(players.map((player) => player.season.name).filter(Boolean))
+    () =>
+      Array.from(
+        new Set(
+          players
+            .map((player) => player.season?.name)
+            .filter((value): value is string => Boolean(value))
+        )
       ).sort((a, b) => b.localeCompare(a)),
-    ],
     [players]
   );
+  const [season, setSeason] = useState("");
+  const effectiveSeason = seasons.includes(season) ? season : (seasons[0] ?? "");
 
   const filteredPlayers = useMemo(() => {
-    const seasonPlayers =
-      season === "All"
-        ? players
-        : players.filter((player) => player.season.name === season);
+    const seasonPlayers = effectiveSeason
+      ? players.filter((player) => player.season?.name === effectiveSeason)
+      : players;
 
     return [...seasonPlayers].sort((a, b) => {
       const pa = POSITION_ORDER.indexOf(a.position.name ?? "");
@@ -46,9 +47,9 @@ export default function TeamSquadTable({ players }: Props) {
         return jerseyDelta;
       }
 
-      return a.player.name.localeCompare(b.player.name);
+      return String(a.player?.name ?? "").localeCompare(String(b.player?.name ?? ""));
     });
-  }, [players, season]);
+  }, [effectiveSeason, players]);
 
   return (
     <section
@@ -62,11 +63,11 @@ export default function TeamSquadTable({ players }: Props) {
           <h2 className="text-xl font-semibold text-white">Squads</h2>
           <p className="mt-1 text-sm text-zinc-500">
             {filteredPlayers.length} player{filteredPlayers.length === 1 ? "" : "s"}
-            {season !== "All" ? ` in ${season}` : ""}
+            {effectiveSeason ? ` in ${effectiveSeason}` : ""}
           </p>
         </div>
 
-        <SquadSeasonFilter seasons={seasons} value={season} onChange={setSeason} />
+        <SquadSeasonFilter seasons={seasons} value={effectiveSeason} onChange={setSeason} />
       </div>
 
       <SquadTable players={filteredPlayers} />

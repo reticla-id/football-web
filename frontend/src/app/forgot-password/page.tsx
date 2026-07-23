@@ -184,7 +184,7 @@ export default function ForgotPasswordPage() {
 
               <Button
                 type="submit"
-                className="w-full bg-[var(--accent-secondary)] text-black transition-all duration-200 hover:scale-[1.01] hover:brightness-110 active:scale-[0.99]"
+                className="w-full bg-[var(--accent-secondary)] text-black transition-all duration-200 hover:scale-[1.01] active:scale-[0.99]"
                 disabled={isLoading}
               >
                 {isLoading ? (
@@ -206,7 +206,7 @@ export default function ForgotPasswordPage() {
 
             <p className="text-sm text-zinc-500">
               Remembered your password?{" "}
-              <Link href="/sign-in" className="accent-text font-medium transition hover:text-white">
+              <Link href="/sign-in" className="accent-secondary font-medium transition hover:text-white">
                 Sign in
               </Link>
             </p>
