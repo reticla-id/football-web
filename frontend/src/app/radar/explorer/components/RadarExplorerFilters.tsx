@@ -98,7 +98,7 @@ export default function RadarExplorerFilters({
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35, ease: "easeOut", delay: 0.08 }}
-      className="mx-auto w-full max-w-[560px] xl:sticky xl:top-6 xl:mx-0 xl:max-w-[292px]"
+      className="mx-auto w-full min-w-0 max-w-[560px] xl:sticky xl:top-6 xl:mx-0 xl:max-w-[280px] 2xl:max-w-[292px]"
     >
       <Card className="border-zinc-800/80 bg-zinc-900/70">
         <CardContent className="space-y-5 p-4 lg:p-5">
@@ -343,11 +343,11 @@ function MultiSelectField({
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0">
       <button
         type="button"
         onClick={() => setOpen((current) => !current)}
-        className="focus-accent flex h-10 w-full items-center justify-between border border-zinc-800 bg-zinc-950/75 px-3 text-left text-sm text-zinc-200 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-900"
+        className="focus-accent flex h-10 w-full min-w-0 items-center justify-between border border-zinc-800 bg-zinc-950/75 px-3 text-left text-sm text-zinc-200 transition-all duration-200 hover:border-zinc-600 hover:bg-zinc-900"
       >
         <div className="flex min-w-0 items-center gap-1.5 text-xs">
           <span className="shrink-0 uppercase tracking-[0.16em] text-zinc-500">
@@ -364,7 +364,7 @@ function MultiSelectField({
       </button>
 
       {open ? (
-        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 border border-zinc-800 bg-zinc-950/98 p-1 shadow-[0_22px_60px_rgba(0,0,0,0.4)]">
+        <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-72 overflow-y-auto border border-zinc-800 bg-zinc-950/98 p-1 shadow-[0_22px_60px_rgba(0,0,0,0.4)]">
           {allowClearAll ? (
             <button
               type="button"
@@ -392,7 +392,7 @@ function MultiSelectField({
                   active && "accent-bg-soft accent-text"
                 )}
               >
-                <span>{option}</span>
+              <span className="min-w-0 truncate">{option}</span>
                 {active ? <Check className="h-4 w-4" /> : null}
               </button>
             );
@@ -527,13 +527,13 @@ function TokenSelector({
               )
             }
             className={cn(
-              "border px-1.5 py-0.5 text-[7px] leading-none font-medium uppercase tracking-[0.12em] transition-colors",
+              "max-w-full border px-1.5 py-0.5 text-[7px] leading-none font-medium uppercase tracking-[0.12em] transition-colors",
               active
                 ? "accent-border-soft accent-bg-soft accent-text"
                 : "border-zinc-800 bg-zinc-950 text-zinc-400 hover:border-zinc-700 hover:text-white"
             )}
           >
-            {option}
+            <span className="block max-w-full truncate">{option}</span>
           </button>
         );
       })}

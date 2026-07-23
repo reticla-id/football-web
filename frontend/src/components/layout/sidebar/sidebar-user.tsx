@@ -33,8 +33,14 @@ export function SidebarUser({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex w-full items-center gap-3 -xl bg-zinc-950/75 p-3 transition-all hover:border-zinc-700 hover:bg-zinc-900">
-          <div className="accent-bg-soft accent-text flex h-10 w-10 shrink-0 items-center justify-center -full border accent-border-soft font-semibold">
+        <button
+          className={`flex items-center border border-[color:var(--accent-secondary)]/55 text-[color:var(--accent-secondary)] transition-all hover:border-[color:var(--accent-secondary)] ${
+            collapsed
+              ? "mx-auto h-16 w-16 justify-center p-0"
+              : "w-full gap-3 p-3"
+          }`}
+        >
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center -full bg-[color:var(--accent-secondary)] font-semibold text-black">
             {avatar}
           </div>
 
@@ -42,10 +48,10 @@ export function SidebarUser({
             <>
               <div className="min-w-0 flex-1 text-left">
                 <p className="truncate text-sm font-medium text-white">{username}</p>
-                <p className="truncate text-xs text-zinc-500">{email}</p>
+                <p className="truncate text-xs text-zinc-400">{email}</p>
               </div>
 
-              <ChevronsUpDown className="h-4 w-4 text-zinc-500" />
+              <ChevronsUpDown className="h-4 w-4 text-[color:var(--accent-secondary)]" />
             </>
           ) : null}
         </button>

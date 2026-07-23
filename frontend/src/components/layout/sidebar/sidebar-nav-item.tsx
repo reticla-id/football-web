@@ -36,12 +36,16 @@ export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProp
       <Link
         href={item.href}
         onClick={onSelect}
-        className="group relative flex items-center gap-3 overflow-hidden -xl px-3.5 py-3 text-base transition-colors"
+        className={`group relative flex w-full overflow-hidden -xl text-base transition-colors ${
+          collapsed
+            ? "justify-center px-0 py-3"
+            : "items-center gap-3 px-3.5 py-3"
+        }`}
       >
         {active ? (
           <motion.div
             layoutId="sidebar-active"
-            className="accent-bg-soft absolute inset-0 -xl"
+            className="absolute inset-0 -xl bg-[color:var(--accent-secondary)]"
             transition={{
               type: "spring",
               stiffness: 520,
@@ -53,20 +57,22 @@ export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProp
         <motion.div
           whileHover={{ rotate: -6, scale: 1.08 }}
           whileTap={{ scale: 0.97 }}
-          className="relative z-10"
+          className={`relative z-10 flex shrink-0 items-center justify-center ${
+            collapsed ? "h-5 w-5" : ""
+          }`}
         >
           <Icon
             className={`h-[18px] w-[18px] ${
-              active ? "accent-text" : "text-zinc-500 group-hover:text-zinc-200"
+              active ? "text-black" : "text-zinc-500 group-hover:text-zinc-200"
             }`}
           />
         </motion.div>
 
         {!collapsed ? (
-          <div className="relative z-10 flex items-start gap-1">
+          <div className="relative z-10 flex min-w-0 items-start gap-1">
             <span
               className={`font-display text-[18px] font-medium tracking-[0.04em] transition-colors ${
-                active ? "text-white" : "text-zinc-400 group-hover:text-white"
+                active ? "text-black" : "text-zinc-400 group-hover:text-white"
               }`}
             >
               {item.label}
@@ -74,10 +80,10 @@ export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProp
 
             {item.badge && (
               <sup
-                className={`font-display text-[12px] font-semibold uppercase tracking-[0.12em] ${
+                className={`font-display text-[10px] font-semibold uppercase tracking-[0.12em] ${
                   badgeStyles[item.badge?.toLowerCase() ?? ""] ??
                   (active
-                    ? "accent-text"
+                    ? "text-black"
                     : "text-zinc-500 group-hover:text-zinc-300")
                 }`}
               >

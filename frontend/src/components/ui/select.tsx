@@ -33,9 +33,11 @@ export const SelectTrigger = React.forwardRef<
       hover:bg-zinc-900
 
       focus:outline-none
-      focus-accent
+      focus:border-zinc-700
+      focus-visible:ring-0
+      focus-visible:ring-offset-0
 
-      data-[state=open]:[border-color:var(--accent)]
+      data-[state=open]:border-zinc-700
       data-[state=open]:bg-zinc-900
       `,
       className

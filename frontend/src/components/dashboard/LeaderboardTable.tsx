@@ -50,12 +50,8 @@ export function LeaderboardTable({
                 <div
                   className={`flex h-6 w-6 items-center justify-center -full text-xs font-bold ${
                     row.rank === 1
-                      ? "bg-yellow-500/20 text-yellow-300"
-                      : row.rank === 2
-                        ? "bg-zinc-700 text-zinc-200"
-                        : row.rank === 3
-                          ? "bg-orange-700/30 text-orange-300"
-                          : "border border-zinc-800 bg-zinc-950 text-zinc-400"
+                      ? "bg-yellow-400 text-black"
+                      : "border border-zinc-800 bg-zinc-950 text-zinc-400"
                   }`}
                 >
                   {row.rank}

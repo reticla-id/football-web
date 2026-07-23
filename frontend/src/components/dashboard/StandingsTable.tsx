@@ -43,13 +43,17 @@ function getTrend(result: StandingRow["result"] | null | undefined) {
   }
 }
 
-function getRowPositionClass(position: number, totalRows: number) {
+function getRowPositionClass(
+  position: number,
+  totalRows: number,
+  options?: { highlightBottom?: boolean }
+) {
   if (position <= 3) {
-    return "accent-border-soft accent-bg-soft accent-text";
+    return "border-[color:var(--accent)] bg-[color:var(--accent)] text-black";
   }
 
-  if (position >= Math.max(totalRows - 2, 1)) {
-    return "border-rose-500/30 bg-rose-500/10 text-rose-300";
+  if (options?.highlightBottom && position >= Math.max(totalRows - 2, 1)) {
+    return "border-rose-500 bg-rose-500 text-white";
   }
 
   return "border-zinc-700 bg-zinc-900 text-zinc-300";
@@ -57,14 +61,14 @@ function getRowPositionClass(position: number, totalRows: number) {
 
 function getFormClass(result: string) {
   if (result === "W") {
-    return "accent-bg-soft accent-text";
+    return "border-[color:var(--accent)] bg-[color:var(--accent)] text-black";
   }
 
   if (result === "D") {
-    return "bg-zinc-800 text-zinc-200";
+    return "border-zinc-700 bg-zinc-700 text-zinc-200";
   }
 
-  return "bg-rose-500/15 text-rose-300";
+  return "border-rose-500 bg-rose-500 text-white";
 }
 
 function buildGoalDifference(row: StandingRow) {
@@ -201,7 +205,9 @@ export function FullStandingsTable({ standings }: { standings: StandingRow[] }) 
                     <span
                       className={[
                         "inline-flex h-8 w-8 items-center justify-center border text-sm font-semibold",
-                        getRowPositionClass(row.position, standings.length),
+                        getRowPositionClass(row.position, standings.length, {
+                          highlightBottom: true,
+                        }),
                       ].join(" ")}
                     >
                       {row.position}
@@ -244,10 +250,10 @@ export function FullStandingsTable({ standings }: { standings: StandingRow[] }) 
                   </td>
                   <td className="px-2 py-3">
                     <div className="flex justify-center gap-1">
-                      {(row.form ?? "").split("").map((result, index) => (
+                      {[...(row.form ?? "").split("")].reverse().map((result, index) => (
                         <span
                           key={`${row.team}-${index}-${result}`}
-                          className={`flex h-6 w-6 items-center justify-center text-[10px] font-semibold ${getFormClass(result)}`}
+                          className={`flex h-6 w-6 items-center justify-center border text-[10px] font-semibold ${getFormClass(result)}`}
                         >
                           {result}
                         </span>

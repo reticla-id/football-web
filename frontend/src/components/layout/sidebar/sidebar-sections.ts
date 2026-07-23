@@ -1,4 +1,4 @@
-import {Home, Newspaper, Users, CalendarDays, Trophy, Swords, BrainCircuit, Radar, Shield, Palette, BookOpenText, ChevronsLeftRightEllipsis } from "lucide-react";
+import {Home, Newspaper, Users, CalendarDays, Trophy, Swords, BrainCircuit, Radar, Shield, Palette, BookOpenText, ChevronsLeftRightEllipsis, TrendingUp } from "lucide-react";
 
 import type { SidebarSection } from "./types";
 
@@ -48,6 +48,12 @@ export const SECTIONS: SidebarSection[] = [
   {
     title: "Labs",
     items: [
+      {
+        href: "/analytics",
+        label: "Analytics",
+        icon: TrendingUp,
+        badge: "Soon",
+      },
       {
         href: "/radar",
         label: "Radar",

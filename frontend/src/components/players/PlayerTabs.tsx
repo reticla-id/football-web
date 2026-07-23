@@ -44,7 +44,7 @@ export default function PlayerTabs({ activeTab, onTabChange }: Props) {
               aria-controls={`player-panel-${tab.key}`}
               id={`player-tab-${tab.key}`}
               onClick={() => onTabChange(tab.key)}
-              className="relative px-3 py-4 text-sm font-medium transition-colors duration-200 hover:bg-zinc-800/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent)] sm:px-5"
+              className="relative px-3 py-4 text-sm font-medium transition-colors duration-200 hover:bg-zinc-800/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[color:var(--accent-secondary)] sm:px-5"
             >
               <span
                 className={cn(
@@ -58,7 +58,7 @@ export default function PlayerTabs({ activeTab, onTabChange }: Props) {
               {active ? (
                 <motion.div
                   layoutId="player-tab-indicator"
-                  className="absolute bottom-0 left-3 right-3 h-[3px] -full bg-[color:var(--accent)] sm:left-5 sm:right-5"
+                  className="absolute bottom-0 left-3 right-3 h-[3px] -full bg-[color:var(--accent-secondary)] sm:left-5 sm:right-5"
                   transition={{
                     type: "spring",
                     stiffness: 400,

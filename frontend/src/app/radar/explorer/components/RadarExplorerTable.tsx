@@ -50,8 +50,8 @@ export default function RadarExplorerTable({
   const EmptyIcon = emptyState.icon;
   const hasAction = Boolean(rowAction);
   const gridClassName = hasAction
-    ? "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px_44px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px_48px]"
-    : "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px]";
+    ? "md:grid-cols-[minmax(260px,2.2fr)_minmax(62px,72px)_minmax(76px,84px)_minmax(92px,104px)_minmax(72px,84px)_minmax(64px,72px)_minmax(68px,76px)_44px] xl:grid-cols-[minmax(320px,2.5fr)_76px_88px_110px_92px_72px_76px_48px]"
+    : "md:grid-cols-[minmax(260px,2.2fr)_minmax(62px,72px)_minmax(76px,84px)_minmax(92px,104px)_minmax(72px,84px)_minmax(64px,72px)_minmax(68px,76px)] xl:grid-cols-[minmax(320px,2.5fr)_76px_88px_110px_92px_72px_76px]";
   const columns: Array<{ key: ExplorerSortColumn; label: string }> = [
     { key: "display_name", label: "Player" },
     { key: "age", label: "Age" },
@@ -63,7 +63,7 @@ export default function RadarExplorerTable({
   ];
 
   return (
-    <Card className="overflow-hidden border-zinc-800/80 bg-[linear-gradient(180deg,rgba(24,24,24,0.94),rgba(11,11,11,0.94))]">
+    <Card className="w-full min-w-0 overflow-hidden border-zinc-800/80 bg-[linear-gradient(180deg,rgba(24,24,24,0.94),rgba(11,11,11,0.94))]">
       <div className="border-b border-zinc-800 px-4 py-4">
         <h3 className="font-display text-[1.45rem] leading-none text-white">
           Player Pool
@@ -74,10 +74,10 @@ export default function RadarExplorerTable({
       </div>
 
       <div className="hidden border-b border-zinc-800 bg-zinc-950/60 px-4 py-3 md:block">
-        <div className="-mx-4 overflow-x-auto px-4 xl:overflow-visible">
+        <div className="w-full min-w-0 overflow-x-auto overscroll-x-contain">
           <div
             className={cn(
-              "grid min-w-[820px] gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500 xl:min-w-0",
+              "grid min-w-[720px] gap-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-zinc-500 lg:min-w-[780px] xl:min-w-0",
               gridClassName
             )}
           >
@@ -91,7 +91,8 @@ export default function RadarExplorerTable({
                   type="button"
                   onClick={() => onSortChange?.(column.key)}
                   className={cn(
-                    "flex items-center gap-1.5 text-left transition-colors hover:text-white",
+                    "min-w-0 items-center gap-1.5 truncate text-left transition-colors hover:text-white",
+                    index === 0 ? "flex" : "inline-flex justify-center md:justify-start",
                     index === 0 && "pl-3 xl:pl-4",
                     !onSortChange && "pointer-events-none"
                   )}
@@ -121,7 +122,7 @@ export default function RadarExplorerTable({
           ))}
         </div>
       ) : players.length ? (
-        <div>
+        <div className="w-full min-w-0">
           {players.map((player) => (
             <PlayerExplorerRow
               key={player.player_id}

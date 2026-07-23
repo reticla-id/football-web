@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import { Clock3, MapPin, Users } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import FixtureStatistics from "@/features/fixture/statistics/FixtureStatistics";
 import FixtureTimeline from "@/features/fixture/timeline/FixtureTimeline";
+import { buildPlayerSlug } from "@/lib/player-utils";
 import type { FixtureLeagueDirectory } from "@/lib/supabase/types";
 import type {
   FixtureLineupPlayer,
@@ -320,9 +322,13 @@ function LineupSection({
 function LineupPlayerRow({ player }: { player: FixtureLineupPlayer }) {
   const positionLabel = getLineupPositionLabel(player);
   const playerName = player.player.display_name ?? "Player unavailable";
+  const playerSlug = buildPlayerSlug(playerName);
 
   return (
-    <div className="grid grid-cols-[44px_44px_minmax(0,1fr)] items-center gap-3 px-5 py-3 transition-colors duration-200 hover:bg-zinc-900/80">
+    <Link
+      href={`/players/${playerSlug}`}
+      className="grid grid-cols-[44px_44px_minmax(0,1fr)] items-center gap-3 px-5 py-3 transition-colors duration-200 hover:bg-zinc-900/80"
+    >
       <div className="flex h-9 w-9 items-center justify-center border border-zinc-800 bg-zinc-950 text-sm font-semibold text-zinc-200">
         {player.jersey_number ?? "-"}
       </div>
@@ -341,7 +347,7 @@ function LineupPlayerRow({ player }: { player: FixtureLineupPlayer }) {
           {positionLabel}
         </p>
       </div>
-    </div>
+    </Link>
   );
 }
 

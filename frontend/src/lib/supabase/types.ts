@@ -111,7 +111,7 @@ export interface FixtureClubOption {
 }
 
 export interface FixtureSeasonOption {
-  id: number;
+  id: number | string;
   name: string;
 }
 

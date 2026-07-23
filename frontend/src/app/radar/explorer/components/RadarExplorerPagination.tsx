@@ -21,7 +21,7 @@ export default function RadarExplorerPagination({
   const end = Math.min(currentPage * pageSize, totalItems);
 
   return (
-    <div className="flex items-center justify-between border border-zinc-800 bg-zinc-900/50 px-4 py-3">
+    <div className="flex flex-col gap-3 border border-zinc-800 bg-zinc-900/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-zinc-400">
         Showing <span className="font-medium text-white">{start}</span>
         {" - "}
@@ -31,7 +31,7 @@ export default function RadarExplorerPagination({
         {" players"}
       </p>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center justify-end gap-2 self-end sm:self-auto">
         <button
           disabled={currentPage === 1}
           onClick={() => onPageChange(Math.max(1, currentPage - 1))}

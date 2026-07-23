@@ -57,10 +57,6 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
 
     return seasons[0]?.name ?? "";
   }, [season, seasons]);
-  const selectedSeasonId = useMemo(
-    () => seasons.find((seasonOption) => seasonOption.name === effectiveSeason)?.id,
-    [effectiveSeason, seasons]
-  );
   const selectedClubId = useMemo(
     () => (club === "all" ? undefined : Number(club)),
     [club]
@@ -90,7 +86,7 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
         const requested = remaining;
         const upcomingResult = await getLeagueUpcomingFixtures(
           league.id,
-          selectedSeasonId,
+          effectiveSeason || undefined,
           selectedClubId,
           requested,
           nextUpcomingOffset
@@ -118,7 +114,7 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
         const requested = remaining;
         const finishedResult = await getLeagueFinishedFixtures(
           league.id,
-          selectedSeasonId,
+          effectiveSeason || undefined,
           selectedClubId,
           requested,
           nextFinishedOffset
@@ -151,7 +147,7 @@ export default function LeagueFixturesClient({ league, seasons, clubs }: Props) 
       setIsInitialLoading(false);
       setIsLoadingMore(false);
     },
-    [league.id, selectedClubId, selectedSeasonId]
+    [effectiveSeason, league.id, selectedClubId]
   );
 
   useEffect(() => {

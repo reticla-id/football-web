@@ -491,6 +491,17 @@ function slugify(value: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
+function compareValuesAsc(a: string, b: string) {
+  return new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: "base",
+  }).compare(a, b);
+}
+
+function compareValuesDesc(a: string, b: string) {
+  return compareValuesAsc(b, a);
+}
+
 async function getSeasonOptionsFromIds(
   seasonIds: number[]
 ): Promise<QueryResult<FixtureSeasonOption[]>> {
@@ -965,7 +976,7 @@ export async function getLeagueFixtureFilters(
 > {
   const { data, error } = await fetchSupabaseData<Record<string, unknown>>(
     "fixture_table",
-    "season_id,home,away",
+    "season_id,season_name,home,away",
     {
       league_id: `eq.${leagueId}`,
       order: "starting_at.desc",
@@ -976,19 +987,13 @@ export async function getLeagueFixtureFilters(
     return { data: null, error };
   }
 
-  const seasonIds = Array.from(
+  const seasonNames = Array.from(
     new Set(
       (data ?? [])
-        .map((fixture) => fixture.season_id)
-        .filter((seasonId): seasonId is number => typeof seasonId === "number")
+        .map((fixture) => String(fixture.season_name ?? "").trim())
+        .filter(Boolean)
     )
-  );
-
-  const seasonOptionsResult = await getSeasonOptionsFromIds(seasonIds);
-
-  if (seasonOptionsResult.error) {
-    return { data: null, error: seasonOptionsResult.error };
-  }
+  ).sort(compareValuesDesc);
 
   const clubMap = new Map<number, FixtureClubOption>();
 
@@ -1020,7 +1025,10 @@ export async function getLeagueFixtureFilters(
 
   return {
     data: {
-      seasons: seasonOptionsResult.data ?? [],
+      seasons: seasonNames.map((seasonName) => ({
+        id: seasonName,
+        name: seasonName,
+      })),
       clubs: Array.from(clubMap.values()).sort((a, b) => a.name.localeCompare(b.name)),
     },
     error: null,
@@ -1056,7 +1064,7 @@ export async function getTeamFixtureFilters(
 
 export async function getLeagueUpcomingFixtures(
   leagueId: number,
-  seasonId?: number,
+  seasonName?: string,
   clubId?: number,
   limit = 10,
   offset = 0,
@@ -1070,8 +1078,8 @@ export async function getLeagueUpcomingFixtures(
     offset,
   };
 
-  if (seasonId) {
-    filters.season_id = `eq.${seasonId}`;
+  if (seasonName) {
+    filters.season_name = `eq.${seasonName}`;
   }
 
   const clubFilter = buildClubFilter(clubId);
@@ -1084,7 +1092,7 @@ export async function getLeagueUpcomingFixtures(
 
 export async function getLeagueFinishedFixtures(
   leagueId: number,
-  seasonId?: number,
+  seasonName?: string,
   clubId?: number,
   limit = 10,
   offset = 0,
@@ -1098,8 +1106,8 @@ export async function getLeagueFinishedFixtures(
     offset,
   };
 
-  if (seasonId) {
-    filters.season_id = `eq.${seasonId}`;
+  if (seasonName) {
+    filters.season_name = `eq.${seasonName}`;
   }
 
   const clubFilter = buildClubFilter(clubId);
@@ -1230,20 +1238,45 @@ export async function getFixtureTimeline(
   };
 }
 
+const PLAYER_SUMMARY_BATCH_SIZE = 1000;
+
 export async function getPlayersSummary(): Promise<
   QueryResult<PlayerSummary[]>
 > {
-  const { data, error } = await fetchSupabaseData<PlayerSummary>(
-    "player_summary_view",
-    "*",
-    {
-      order: "display_name.asc"
+  const allPlayers: PlayerSummary[] = [];
+  let offset = 0;
+
+  while (true) {
+    const { data, error } = await fetchSupabaseData<PlayerSummary>(
+      "player_summary_view",
+      "*",
+      {
+        order: "display_name.asc",
+        limit: PLAYER_SUMMARY_BATCH_SIZE,
+        offset,
+      }
+    );
+
+    if (error) {
+      return {
+        data: null,
+        error,
+      };
     }
-  );
+
+    const batch = data ?? [];
+    allPlayers.push(...batch);
+
+    if (batch.length < PLAYER_SUMMARY_BATCH_SIZE) {
+      break;
+    }
+
+    offset += PLAYER_SUMMARY_BATCH_SIZE;
+  }
 
   return {
-    data: data ?? [],
-    error,
+    data: allPlayers,
+    error: null,
   };
 }
 

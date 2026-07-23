@@ -23,8 +23,8 @@ export default function PlayerExplorerRow({
   };
 }) {
   const rowGridClassName = rowAction
-    ? "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px_44px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px_48px]"
-    : "md:grid-cols-[minmax(280px,2.6fr)_78px_88px_108px_108px_80px_80px] xl:grid-cols-[minmax(320px,2.7fr)_88px_96px_116px_116px_84px_84px]";
+    ? "md:grid-cols-[minmax(260px,2.2fr)_minmax(62px,72px)_minmax(76px,84px)_minmax(92px,104px)_minmax(72px,84px)_minmax(64px,72px)_minmax(68px,76px)_44px] xl:grid-cols-[minmax(320px,2.5fr)_76px_88px_110px_92px_72px_76px_48px]"
+    : "md:grid-cols-[minmax(260px,2.2fr)_minmax(62px,72px)_minmax(76px,84px)_minmax(92px,104px)_minmax(72px,84px)_minmax(64px,72px)_minmax(68px,76px)] xl:grid-cols-[minmax(320px,2.5fr)_76px_88px_110px_92px_72px_76px]";
   const contentSpanClassName = rowAction ? "md:col-span-7" : "md:col-span-6";
   const detailCardSpanClassName = rowAction ? "md:col-span-8" : "md:col-span-7";
   const detailStats = [
@@ -37,41 +37,41 @@ export default function PlayerExplorerRow({
 
   return (
     <div
-      className={`grid grid-cols-1 ${rowGridClassName} items-start gap-3 border-b border-zinc-800 px-4 py-3 transition-colors hover:bg-zinc-900/75 md:items-center`}
+      className={`grid min-w-0 grid-cols-1 ${rowGridClassName} items-start gap-3 border-b border-zinc-800 px-3 py-3 transition-colors hover:bg-zinc-900/75 sm:px-4 md:items-center`}
     >
       <motion.button
         type="button"
         whileHover={{ x: 4 }}
         transition={{ duration: 0.18, ease: "easeOut" }}
         onClick={() => onToggleExpanded?.(player.player_id)}
-        className={`${contentSpanClassName} text-left md:grid md:grid-cols-subgrid md:items-center md:gap-3`}
+        className={`${contentSpanClassName} min-w-0 text-left md:grid md:grid-cols-subgrid md:items-center md:gap-3`}
         aria-expanded={isExpanded}
         aria-controls={`radar-player-panel-${player.player_id}`}
       >
-        <div className="flex min-w-0 items-center gap-4 pl-2 md:pl-3 xl:pl-4">
+        <div className="flex min-w-0 items-center gap-3 pl-1 sm:pl-2 md:pl-3 xl:pl-4">
           <img
             src={player.image_path ?? "/placeholder-player.png"}
             alt={player.display_name}
             className="h-10 w-10 shrink-0 rounded-full object-cover"
           />
 
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate font-semibold text-white">{player.display_name}</p>
             <p className="truncate text-[11px] uppercase tracking-[0.18em] text-zinc-500">
               {player.detailed_position_name}
             </p>
           </div>
 
-          <div className="ml-auto flex justify-end pr-1 md:pr-2">
+          <div className="ml-auto flex shrink-0 justify-end pr-0 md:pr-2">
             <img
               src={player.team_image_path ?? "/placeholder-club.png"}
               alt={player.clubName}
-              className="h-8 w-8 shrink-0 object-contain"
+              className="h-8 w-8 shrink-0 object-contain sm:ml-2"
             />
           </div>
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-zinc-400 md:mt-0 md:contents">
+        <div className="mt-3 grid min-w-0 grid-cols-2 gap-2 text-xs text-zinc-400 sm:grid-cols-3 md:mt-0 md:contents">
           <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
             <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Age</span>
             {player.age ?? "-"}
@@ -81,7 +81,7 @@ export default function PlayerExplorerRow({
             {player.heightValue != null ? `${player.heightValue} cm` : "-"}
           </div>
           <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
-            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Foot</span>
+            <span className="block text-[10px] uppercase tracking-[0.18em] text-zinc-500 md:hidden">Pref. Foot</span>
             {player.prefer_foot ?? "-"}
           </div>
           <div className="border border-zinc-800/70 bg-zinc-950/55 px-3 py-2 md:border-0 md:bg-transparent md:px-0 md:py-0 md:text-sm md:text-zinc-300">
@@ -99,7 +99,7 @@ export default function PlayerExplorerRow({
         </div>
       </motion.button>
 
-      <div className="mt-1 flex justify-end pr-1 sm:pr-0 md:mt-0 md:justify-center md:pr-0">
+      <div className="mt-1 flex min-w-0 justify-end pr-0 md:mt-0 md:justify-center">
         {rowAction ? (
           <motion.button
             type="button"
@@ -135,16 +135,16 @@ export default function PlayerExplorerRow({
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.22, ease: "easeOut" }}
-            className={`${detailCardSpanClassName} overflow-hidden`}
+            className={`${detailCardSpanClassName} min-w-0 overflow-hidden`}
           >
-            <div className="border border-zinc-800 bg-zinc-950/70 px-4 py-4">
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            <div className="min-w-0 border border-zinc-800 bg-zinc-950/70 px-3 py-4 sm:px-4">
+              <div className="grid min-w-0 gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 {detailStats.map((stat) => (
                   <div
                     key={stat.label}
-                    className="border border-zinc-800/60 bg-zinc-950/55 px-3 py-3 xl:border-0 xl:bg-transparent"
+                    className="min-w-0 border border-zinc-800/60 bg-zinc-950/55 px-3 py-3 xl:border-0 xl:bg-transparent"
                   >
-                    <p className="text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                    <p className="break-words text-[10px] uppercase tracking-[0.2em] text-zinc-500">
                       {stat.label}
                     </p>
                     <p className="mt-2 text-sm font-semibold text-white">{stat.value}</p>
@@ -152,10 +152,10 @@ export default function PlayerExplorerRow({
                 ))}
               </div>
 
-              <div className="mt-4 flex justify-stretch sm:justify-end">
+              <div className="mt-4 flex min-w-0 justify-stretch md:justify-end">
                 <Link
                   href={`/players/${player.slug}`}
-                  className="accent-text inline-flex w-full items-center justify-center gap-2 border border-zinc-800 bg-zinc-950/60 px-4 py-2 text-sm font-medium transition hover:border-zinc-700 hover:text-white sm:w-auto sm:justify-end sm:border-0 sm:bg-transparent sm:px-0 sm:py-0"
+                  className="accent-text inline-flex w-full max-w-full items-center justify-center gap-2 border border-zinc-800 bg-zinc-950/60 px-4 py-2 text-sm font-medium transition hover:border-zinc-700 hover:text-white md:w-auto md:justify-end md:border-0 md:bg-transparent md:px-0 md:py-0"
                 >
                   View Player
                   <ArrowRight className="h-4 w-4" />

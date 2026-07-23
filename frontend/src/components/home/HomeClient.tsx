@@ -541,21 +541,22 @@ export default function HomeClient() {
               <section className="grid w-full min-w-0 gap-6 xl:grid-cols-[minmax(0,2fr)_minmax(300px,1fr)_minmax(300px,1fr)]">
                 <Card className="flex h-full w-full min-w-0 flex-col">
                   <CardHeader className="px-4 py-3">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="flex min-w-0 flex-wrap items-center gap-2.5 sm:gap-3">
                         <CardTitle className="text-[2rem]">League standings</CardTitle>
+                        <Link
+                          href="/leagues"
+                          className="accent-text inline-flex items-center gap-1 whitespace-nowrap text-xs font-medium transition hover:text-white"
+                        >
+                          <span>View full</span>
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                      <div className="min-w-0">
                         <p className="mt-1 text-sm text-zinc-400">
                           Live table view with form, goal difference, and momentum cues.
                         </p>
                       </div>
-
-                      <Link
-                        href="/leagues"
-                        className="hover-accent-text accent-text inline-flex items-center gap-2 text-sm font-medium transition"
-                      >
-                        Open league
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
                     </div>
                   </CardHeader>
 

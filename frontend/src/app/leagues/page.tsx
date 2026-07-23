@@ -692,8 +692,16 @@ function LeagueLeaderboardTable({
                   href={`/players/${buildPlayerSlug(row.name)}`}
                   className="grid grid-cols-[56px_minmax(240px,1.7fr)_56px_minmax(180px,1fr)_120px] items-center gap-3 border-b border-zinc-800 px-5 py-3 transition-colors hover:bg-zinc-900/75 last:border-none"
                 >
-                  <div className="text-center text-sm font-semibold text-zinc-500">
-                    {row.rank}
+                  <div className="flex justify-center">
+                    <span
+                      className={`flex h-6 w-6 items-center justify-center text-xs font-bold ${
+                        row.rank === 1
+                          ? "bg-yellow-400 text-black"
+                          : "border border-zinc-800 bg-zinc-950 text-zinc-400"
+                      }`}
+                    >
+                      {row.rank}
+                    </span>
                   </div>
 
                   <div className="flex min-w-0 items-center gap-3">
@@ -766,6 +774,17 @@ function LeagueClubStatisticsTable({ rows }: { rows: ClubSeasonSummary[] }) {
     { key: "yellow_cards", label: "YC", description: "Yellow cards, with per-game average in brackets." },
     { key: "red_cards", label: "RC", description: "Red cards, with per-game average in brackets." },
   ];
+
+  const highlightedColumnLeaders = useMemo(
+    () =>
+      getHighlightedClubStatLeaders(
+        rows,
+        columns
+          .map((column) => column.key)
+          .filter((key) => key !== "team_name" && key !== "played")
+      ),
+    [rows]
+  );
 
   const sortedRows = useMemo(() => {
     if (!sortState.key || !sortState.direction) {
@@ -862,18 +881,42 @@ function LeagueClubStatisticsTable({ rows }: { rows: ClubSeasonSummary[] }) {
                     <span className="truncate font-medium text-white">{row.team_name}</span>
                   </Link>
                 </td>
-                <td className="text-center text-zinc-300">{row.played}</td>
-                <td className="text-center text-zinc-300">{formatStat(row.possession_avg, "%")}</td>
-                <td className="text-center text-zinc-300">{formatStat(row.pass_accuracy, "%")}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.passes, row.passes_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.shots, row.shots_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.shots_on_target, row.shots_on_target_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.corners, row.corners_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.fouls, row.fouls_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.offsides, row.offsides_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.saves, row.saves_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.yellow_cards, row.yellow_cards_per_game)}</td>
-                <td className="text-center text-zinc-300">{formatStatPair(row.red_cards, row.red_cards_per_game)}</td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "played", row.team_id)}>
+                  {row.played}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "possession_avg", row.team_id)}>
+                  {formatStat(row.possession_avg, "%")}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "pass_accuracy", row.team_id)}>
+                  {formatStat(row.pass_accuracy, "%")}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "passes", row.team_id)}>
+                  {formatStatPair(row.passes, row.passes_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "shots", row.team_id)}>
+                  {formatStatPair(row.shots, row.shots_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "shots_on_target", row.team_id)}>
+                  {formatStatPair(row.shots_on_target, row.shots_on_target_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "corners", row.team_id)}>
+                  {formatStatPair(row.corners, row.corners_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "fouls", row.team_id)}>
+                  {formatStatPair(row.fouls, row.fouls_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "offsides", row.team_id)}>
+                  {formatStatPair(row.offsides, row.offsides_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "saves", row.team_id)}>
+                  {formatStatPair(row.saves, row.saves_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "yellow_cards", row.team_id)}>
+                  {formatStatPair(row.yellow_cards, row.yellow_cards_per_game)}
+                </td>
+                <td className={getClubStatHighlightClass(highlightedColumnLeaders, "red_cards", row.team_id)}>
+                  {formatStatPair(row.red_cards, row.red_cards_per_game)}
+                </td>
               </tr>
             ))}
           </tbody>
@@ -1011,4 +1054,64 @@ function getClubStatSortValue(row: ClubSeasonSummary, key: ClubStatsSortKey) {
     case "red_cards":
       return row.red_cards ?? Number.NEGATIVE_INFINITY;
   }
+}
+
+function getHighlightedClubStatLeaders(
+  rows: ClubSeasonSummary[],
+  keys: ClubStatsSortKey[]
+) {
+  const leaders = new Map<ClubStatsSortKey, number>();
+
+  for (const key of keys) {
+    if (key === "team_name") {
+      continue;
+    }
+
+    let bestRow: ClubSeasonSummary | null = null;
+    let bestValue = Number.NEGATIVE_INFINITY;
+
+    for (const row of rows) {
+      const value = getClubStatNumericValue(row, key);
+
+      if (value == null) {
+        continue;
+      }
+
+      if (value > bestValue) {
+        bestValue = value;
+        bestRow = row;
+        continue;
+      }
+
+      if (
+        value === bestValue &&
+        bestRow &&
+        row.team_name.localeCompare(bestRow.team_name, undefined, {
+          sensitivity: "base",
+        }) < 0
+      ) {
+        bestRow = row;
+      }
+    }
+
+    if (bestRow) {
+      leaders.set(key, bestRow.team_id);
+    }
+  }
+
+  return leaders;
+}
+
+function getClubStatNumericValue(row: ClubSeasonSummary, key: ClubStatsSortKey) {
+  const value = getClubStatSortValue(row, key);
+
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+function getClubStatHighlightClass(
+  leaders: Map<ClubStatsSortKey, number>,
+  key: ClubStatsSortKey,
+  teamId: number
+) {
+  return `text-center ${leaders.get(key) === teamId ? "accent-text font-medium" : "text-zinc-300"}`;
 }

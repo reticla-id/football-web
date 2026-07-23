@@ -8,19 +8,9 @@
   --border: #2a2a2a;
   --foreground: #ffffff;
   --foreground-secondary: #a0a0a0;
-  --accent: #D1FF00;
+  --accent: #84CC16;
+  --accent-secondary: #ffffff;
   --accent-soft: color-mix(in srgb, var(--accent) 12%, transparent);
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-background-secondary: var(--background-secondary);
-  --color-surface: var(--surface);
-  --color-surface-elevated: var(--surface-elevated);
-  --color-border: var(--border);
-  --color-foreground: var(--foreground);
-  --color-foreground-secondary: var(--foreground-secondary);
-  --font-sans: var(--font-inter);
 }
 
 * {
@@ -86,6 +76,11 @@ h3 {
 
 .accent-text {
   color: var(--accent);
+  text-shadow: none;
+}
+
+.accent-secondary {
+  color: var(--accent-secondary);
   text-shadow: none;
 }
 
