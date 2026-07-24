@@ -10,6 +10,7 @@ interface SidebarNavItemProps {
   item: NavItemType;
   collapsed: boolean;
   onSelect?: () => void;
+  scope?: "desktop" | "mobile";
 }
 
 const badgeStyles: Record<string, string> = {
@@ -19,7 +20,12 @@ const badgeStyles: Record<string, string> = {
   alpha: "text-purple-400 group-hover:text-purple-300",
 };
 
-export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProps) {
+export function SidebarNavItem({
+  item,
+  collapsed,
+  onSelect,
+  scope = "desktop",
+}: SidebarNavItemProps) {
   const pathname = usePathname();
   const radarAliasMatch =
     item.href === "/radar" &&
@@ -44,7 +50,7 @@ export function SidebarNavItem({ item, collapsed, onSelect }: SidebarNavItemProp
       >
         {active ? (
           <motion.div
-            layoutId="sidebar-active"
+            layoutId={`sidebar-active-${scope}-${collapsed ? "collapsed" : "expanded"}`}
             className="absolute inset-0 -xl bg-[color:var(--accent-secondary)]"
             transition={{
               type: "spring",

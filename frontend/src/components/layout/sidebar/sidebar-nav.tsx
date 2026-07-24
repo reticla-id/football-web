@@ -8,11 +8,16 @@ import { SidebarNavItem } from "./sidebar-nav-item";
 interface SidebarNavProps {
   collapsed: boolean;
   onItemSelect?: () => void;
+  scope?: "desktop" | "mobile";
 }
 
-export function SidebarNav({ collapsed, onItemSelect }: SidebarNavProps) {
+export function SidebarNav({
+  collapsed,
+  onItemSelect,
+  scope = "desktop",
+}: SidebarNavProps) {
   return (
-    <LayoutGroup id="sidebar-nav">
+    <LayoutGroup id={`sidebar-nav-${scope}`}>
       <nav className="flex-1 overflow-y-auto px-4 py-4">
         {SECTIONS.map((section) => (
           <motion.div
@@ -42,6 +47,7 @@ export function SidebarNav({ collapsed, onItemSelect }: SidebarNavProps) {
                   item={item}
                   collapsed={collapsed}
                   onSelect={onItemSelect}
+                  scope={scope}
                 />
               ))}
             </div>

@@ -104,11 +104,8 @@ export default function ForgotPasswordPage() {
               </p>
 
               <h2 className="font-display text-[2.85rem] leading-[0.92] text-white sm:text-[3.2rem] lg:text-[4.2rem] xl:text-[5rem]">
-                RESTORE
+                RESTORE ACCESS
                 <br />
-                SECURE
-                <br />
-                ACCESS.
               </h2>
 
               <p className="mt-6 max-w-xl text-sm leading-7 text-zinc-300 lg:text-base lg:leading-8">

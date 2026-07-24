@@ -5,11 +5,14 @@ import { useMemo, useState } from "react";
 import { Clock3, MapPin, Users } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
+import FixtureActionMaps from "@/features/fixture/pitch/FixtureActionMaps";
 import FixtureStatistics from "@/features/fixture/statistics/FixtureStatistics";
 import FixtureTimeline from "@/features/fixture/timeline/FixtureTimeline";
 import { buildPlayerSlug } from "@/lib/player-utils";
 import type { FixtureLeagueDirectory } from "@/lib/supabase/types";
 import type {
+  FixtureBallCoordinate,
+  FixturePressure,
   FixtureLineupPlayer,
   FixtureLineups,
   FixtureLineupTeam,
@@ -24,9 +27,18 @@ interface Props {
   fixture: TeamFixture;
   lineups?: FixtureLineups | null;
   statistics: FixtureStatistic[];
+  pressures: FixturePressure[];
+  ballCoordinates: FixtureBallCoordinate[];
 }
 
-export default function FixtureDetailClient({ league, fixture, lineups, statistics }: Props) {
+export default function FixtureDetailClient({
+  league,
+  fixture,
+  lineups,
+  statistics,
+  pressures,
+  ballCoordinates,
+}: Props) {
   const [tab, setTab] = useState<FixtureTab>("match-facts");
   const [currentTimestamp] = useState(() => Date.now());
   const kickoff = new Date(fixture.starting_at);
@@ -123,7 +135,19 @@ export default function FixtureDetailClient({ league, fixture, lineups, statisti
 
         {tab === "lineups" ? <LineupsPanel fixture={fixture} lineups={preparedLineups} /> : null}
 
-        <PlaceholderPanel tab={tab} title="Action Maps" active={tab === "action-maps"} />
+        {tab === "action-maps" ? (
+          <div
+            id="fixture-panel-action-maps"
+            role="tabpanel"
+            aria-labelledby="fixture-tab-action-maps"
+          >
+            <FixtureActionMaps
+              fixture={fixture}
+              pressures={pressures}
+              ballCoordinates={ballCoordinates}
+            />
+          </div>
+        ) : null}
         <PlaceholderPanel tab={tab} title="Details" active={tab === "details"} />
       </section>
     </>

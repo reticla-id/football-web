@@ -81,11 +81,15 @@ export function Sidebar({
       ) : null}
 
       <div className="flex-1 overflow-y-auto lg:hidden">
-        <SidebarNav collapsed={mobileCollapsed} onItemSelect={onCloseMobile} />
+        <SidebarNav
+          collapsed={mobileCollapsed}
+          onItemSelect={onCloseMobile}
+          scope="mobile"
+        />
       </div>
 
       <div className="hidden flex-1 overflow-y-auto lg:block">
-        <SidebarNav collapsed={desktopCollapsed} />
+        <SidebarNav collapsed={desktopCollapsed} scope="desktop" />
       </div>
 
       <div className="lg:hidden">

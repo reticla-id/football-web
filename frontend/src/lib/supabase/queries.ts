@@ -18,7 +18,7 @@ import type {
   LeagueStats
 } from "./types";
 import type { SquadPlayer } from "@/types/squad";
-import type { TeamFixture, FixtureLineups, FixtureStatistic, FixtureTimelineEvent } from "@/types/fixture";
+import type { TeamFixture, FixtureLineups, FixtureStatistic, FixtureTimelineEvent, FixturePressure, FixtureBallCoordinate } from "@/types/fixture";
 import type { Team } from "@/types/team";
 import type { PlayerSummary } from "@/types/player";
 
@@ -1435,6 +1435,32 @@ export async function getClubSeasonSummary(
       season_id: `eq.${seasonId}`,
       league_id: `eq.${leagueId}`,
       order: "team_name.asc",
+    }
+  );
+}
+
+export async function getFixturePressures(
+  fixtureId: number
+): Promise<QueryResult<FixturePressure[]>> {
+  return fetchSupabaseData<FixturePressure>(
+    "fixture_pressure_timeline_view",
+    "*",
+    {
+      fixture_id: `eq.${fixtureId}`,
+      order: "participant_id.asc,minute.asc",
+    }
+  );
+}
+
+export async function getFixtureBallCoordinates(
+  fixtureId: number
+): Promise<QueryResult<FixtureBallCoordinate[]>> {
+  return fetchSupabaseData<FixtureBallCoordinate>(
+    "fact_fixture_ballcoordinates",
+    "*",
+    {
+      fixture_id: `eq.${fixtureId}`,
+      order: "fixture_id.asc,timer_in_seconds.asc",
     }
   );
 }

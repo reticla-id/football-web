@@ -5,8 +5,10 @@ import FixtureDetailClient from "@/components/fixtures/FixtureDetailClient";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   getFixtureById,
+  getFixtureBallCoordinates,
   getFixtureLeagues,
   getFixtureLineups,
+  getFixturePressures,
   getFixtureStatistics,
 } from "@/lib/supabase/queries";
 
@@ -76,8 +78,12 @@ export default async function FixtureDetailPage({ params }: Props) {
     );
   }
 
-  const lineupsResult = await getFixtureLineups(fixtureId);
-  const statisticsResult = await getFixtureStatistics(fixtureId);
+  const [lineupsResult, statisticsResult, pressuresResult, ballCoordinatesResult] = await Promise.all([
+    getFixtureLineups(fixtureId),
+    getFixtureStatistics(fixtureId),
+    getFixturePressures(fixtureId),
+    getFixtureBallCoordinates(fixtureId),
+  ]);
 
   return (
     <FixtureDetailPageShell slug={slug}>
@@ -86,6 +92,8 @@ export default async function FixtureDetailPage({ params }: Props) {
         fixture={fixtureResult.data}
         lineups={lineupsResult.data}
         statistics={statisticsResult.data ?? []}
+        pressures={pressuresResult.data ?? []}
+        ballCoordinates={ballCoordinatesResult.data ?? []}
       />
     </FixtureDetailPageShell>
   );

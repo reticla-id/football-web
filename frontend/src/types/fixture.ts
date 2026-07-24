@@ -144,3 +144,38 @@ export interface FixtureTimelineEvent {
 
   related_player: FixtureTimelinePlayer | null;
 }
+
+export type FixturePressure = {
+  id: number;
+  fixture_id: number;
+  participant_id: number;
+
+  team_name: string;
+  image_path: string | null;
+
+  minute: number;
+  pressure: number;
+
+  events: {
+    event_id: number;
+    type_id: number;
+    code: string;
+    name: string;
+    player_id: number | null;
+    related_player_id: number | null;
+    result: string | null;
+    addition: number | null;
+    extra_minute: number | null;
+  }[] | null;
+};
+
+export interface FixtureBallCoordinate {
+  fixture_id: number;
+  x: number;
+  y: number;
+  duration_seconds: number;
+
+  field_zone: string;
+  field_lane: string;
+  field_sector: string;
+}
